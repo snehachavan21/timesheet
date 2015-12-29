@@ -58,22 +58,11 @@ class ApiController extends Controller
      *
      * @return mixed
      */
-    public function getUserListByRole()
+    public function getUserListByRole(Request $request)
     {
-
-        $select = [
-            'u.name as name',
-            'u.id as id',
-        ];
-        $query = DB::table('users as u');
-        $query->select($select);
-        $query->join('roles_users as ru', 'u.id', '=', 'ru.user_id');
-        $query->join('roles as r', 'r.id', '=', 'ru.role_id');
-        $query->whereRaw('ru.role_id IN (1,3)');
-        //$query->where('ru.role_id', $roleId);
-        $result = $query->get();
-        return $result;
-        //return User::orderBy('name')->get();
+        $roleIds = $request->input();
+        $userObj = new User;
+        return $userObj->getUserListByRole($roleIds);
     }
 
     /**
@@ -323,6 +312,11 @@ class ApiController extends Controller
         $request_backdate_entries = $timeEntryObj->getLatestRequestBackdateTimeEntries();
 
         return response($request_backdate_entries, 200);
+    }
+
+    public function getRequestBackDateEntryById($id)
+    {
+        return DB::table('backdate_requests')->where('id', '=', $id)->get();
     }
 
     public function allowBackdateEntry(Request $request, SendMailInterface $mail)

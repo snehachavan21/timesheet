@@ -49,7 +49,7 @@ myApp.config(['$routeProvider', '$locationProvider',
 
         $routeProvider.when('/logout', {
             templateUrl: '/templates/users/user-logout.html',
-            controller: 'userController'
+            controller: 'logoutController'
         });
 
         $routeProvider.when('/report', {
@@ -177,6 +177,18 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/user/view-request-backdate/:backdateentryId', {
+            templateUrl: '/templates/users/view-request-backdate.html',
+            controller: 'userController',
+            resolve: {
+                action: function(userFactory, timeEntry, $route) {
+                    return {
+                        singleEntry: timeEntry.getRequestBackDateEntriesById($route.current.params.backdateentryId)
+
+                    };
+                }
+            }
+        });
         $routeProvider.otherwise('/');
     }
 ]);
