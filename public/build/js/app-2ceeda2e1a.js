@@ -9,30 +9,56 @@ var myApp = angular.module('myApp', [
     'textAngular'
 ]);
 
-myApp.run(['userFactory', '$cookies', function(userFactory, $cookies) {
-    if ($cookies.get('userObj') === undefined) {
-        userFactory.getUserObj().success(function(response) {
-            console.log('created user object', response);
-            $cookies.putObject('userObj', response);
-        });
-    }
-}]);
+myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
+    function (userFactory, $cookies, $rootScope, $location) {
+        /*check if auth object is available*/
+        if ($cookies.get('userObj') === undefined) {
+            userFactory.getUserObj().success(function (response) {
+                console.log('created user object', response);
+                $cookies.putObject('userObj', response);
+            });
+        }
 
-myApp.filter('unsafe', function($sce) {
+        /*handling the route change to check if the current url is access based*/
+        $rootScope.$on("$routeChangeStart",
+            function (event, next, current) {
+                if (next.$$route.roles !== undefined) {
+                    var access = false;
+                    var userObj = $cookies.getObject('userObj');
+                    console.log('userObj', userObj);
+                    angular.forEach(next.$$route.roles, function (roleValue, roleKey) {
+                        console.log(roleValue);
+                        angular.forEach(userObj.roles, function (userValue, userKey) {
+                            console.log(userValue);
+                            if (roleValue == userValue.roleName) {
+                                access = true;
+                            }
+                        });
+                    });
+
+                    console.log(access);
+                    if (access == false) {
+                        $location.path('access-denied');
+                    }
+                }
+            });
+    }]);
+
+myApp.filter('unsafe', function ($sce) {
     return $sce.trustAsHtml;
 });
 
 myApp.controller('globalController', ['$scope', '$location',
-    function($scope, $location) {
+    function ($scope, $location) {
         angular.extend($scope, {
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
-            checkActiveLink: function(currLink) {
+            checkActiveLink: function (currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
                 }
             },
-            timeAgo: function(string) {
+            timeAgo: function (string) {
                 return moment(string).fromNow();
             }
         })
@@ -41,7 +67,7 @@ myApp.controller('globalController', ['$scope', '$location',
 
 /*Routes*/
 myApp.config(['$routeProvider', '$locationProvider',
-    function($routeProvider, $locationProvider) {
+    function ($routeProvider, $locationProvider) {
         $routeProvider.when('/', {
             templateUrl: '/templates/manager/managerReports.html',
             controller: 'dashboardController'
@@ -49,19 +75,25 @@ myApp.config(['$routeProvider', '$locationProvider',
 
         $routeProvider.when('/logout', {
             templateUrl: '/templates/users/user-logout.html',
-            controller: 'userController'
+            controller: 'logoutController'
+        });
+
+        $routeProvider.when('/access-denied', {
+            templateUrl: '/templates/admin/access-denied.html',
+            controller: 'dashboardController'
         });
 
         $routeProvider.when('/report', {
             templateUrl: '/templates/manager/reports.html',
-            controller: 'reportController'
+            controller: 'reportController',
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects', {
             templateUrl: '/templates/projects/projects-listing.html',
             controller: 'projectController',
             resolve: {
-                action: function(projectFactory) {
+                action: function (projectFactory) {
                     return {
                         projects: projectFactory.getProjectList()
                     }
@@ -72,8 +104,9 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/projects/add', {
             templateUrl: '/templates/projects/add-project.html',
             controller: 'projectController',
+            roles: ['Admin', 'Project Manager'],
             resolve: {
-                action: function(clientFactory) {
+                action: function (clientFactory) {
                     return {
                         clients: clientFactory.getClientList()
                     }
@@ -85,7 +118,7 @@ myApp.config(['$routeProvider', '$locationProvider',
             templateUrl: '/templates/projects/projects-details.html',
             controller: 'projectController',
             resolve: {
-                action: function() {
+                action: function () {
                     return 'single';
                 }
             }
@@ -94,33 +127,37 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/projects/:pid/comments', {
             templateUrl: '/templates/projects/project-comments.html',
             controller: 'projectController',
+            roles: ['Admin', 'Project Manager'],
             resolve: {
-                action: function(commentFactory, $route) {
+                action: function (commentFactory, $route) {
                     return {
                         comments: commentFactory.getProjectComments($route.current.params.pid)
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects/:id/estimate/add', {
             templateUrl: '/templates/projects/project-estimate-add.html',
             controller: 'projectController',
             resolve: {
-                action: function() {
+                action: function () {
                     return 'single';
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects/estimate/:estimateId', {
             templateUrl: '/templates/projects/estimate-edit.html',
             controller: 'projectController',
             resolve: {
-                action: function() {
+                action: function () {
                     return 'single';
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         /*Management URLs*/
@@ -128,46 +165,49 @@ myApp.config(['$routeProvider', '$locationProvider',
             templateUrl: '/templates/admin/backdateentry.html',
             controller: 'adminController',
             resolve: {
-                action: function(userFactory, timeEntry) {
+                action: function (userFactory, timeEntry) {
                     return {
                         users: userFactory.getUserList(),
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/manage/view-back-date-entry/:backdateentryId', {
             templateUrl: '/templates/admin/view-backdateentry.html',
             controller: 'adminController',
             resolve: {
-                action: function(userFactory, timeEntry) {
+                action: function (userFactory, timeEntry) {
                     return {
                         users: userFactory.getUserList(),
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/manage/view-back-date-entry/:backdateentryId', {
             templateUrl: '/templates/admin/view-backdateentry.html',
             controller: 'adminController',
             resolve: {
-                action: function(userFactory, timeEntry) {
+                action: function (userFactory, timeEntry) {
                     return {
                         users: userFactory.getUserList(),
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/user/request-backdate-entry', {
             templateUrl: '/templates/users/request-backdate.html',
             controller: 'userController',
             resolve: {
-                action: function(userFactory, timeEntry) {
+                action: function (userFactory, timeEntry) {
                     return {
                         users: userFactory.getUserListByRole(),
                         allEntries: timeEntry.getRequestBackDateEntries()
@@ -177,17 +217,95 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
-        $routeProvider.when('/ticket/add-ticket', {
+        $routeProvider.when('/user/view-request-backdate/:backdateentryId', {
+            templateUrl: '/templates/users/view-request-backdate.html',
+            controller: 'userController',
+            resolve: {
+                action: function (userFactory, timeEntry, $route) {
+                    return {
+                        singleEntry: timeEntry.getRequestBackDateEntriesById($route.current.params.backdateentryId)
+
+                    };
+                }
+            }
+        });
+
+        /*Ticket section*/
+        $routeProvider.when('/ticket/add', {
             templateUrl: '/templates/tickets/add-ticket.html',
             controller: 'ticketController',
+            roles: ['Admin', 'Project Manager'],
             resolve: {
-                action: function() {
+                action: function () {
                     return 'single';
                 }
             }
         });
 
         $routeProvider.otherwise('/');
+    }
+]);
+
+
+myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
+    function($scope, action, timeEntry, snackbar) {
+
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        if (action && action.allEntries != undefined) {
+            window.document.title = 'Backdate entry';
+
+            action.allEntries.success(function(response) {
+                if (response.length != 0) {
+                    console.log('all Entries', response.length);
+                    $scope.allEntries = response;
+                    $scope.showEntries = true;
+                }
+            });
+        }
+
+        /*Variables*/
+        angular.extend($scope, {
+            backdateEntry: {},
+            allEntries: {},
+            showEntries: false
+        });
+
+        /*Methods*/
+        angular.extend($scope, {
+            backdateEntrySubmit: function(backdateEntryForm) {
+                if (backdateEntryForm.$valid) {
+                    /*get all the user ids*/
+                    var userIds = [];
+                    if ($scope.backdateEntry != undefined) {
+                        angular.forEach($scope.backdateEntry.users, function(value, key) {
+                            userIds.push(value.id);
+                        });
+                    }
+
+                    /*create the post data*/
+                    var entryData = {
+                        date: $scope.backdateEntry.backdate,
+                        users: userIds,
+                        comment: $scope.backdateEntry.reason
+                    };
+
+                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
+                        console.log('backdate entries', response);
+                        $scope.allEntries = response;
+                        $scope.backdateEntry = {};
+                        $scope.showEntries = true;
+                        snackbar.create("Entry added and mail sent.", 1000);
+                    });
+                }
+            }
+        });
     }
 ]);
 
@@ -199,6 +317,31 @@ myApp.factory('clientFactory', ['$http', function($http) {
     }
 
     return clientFactory;
+}]);
+
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        console.log('Project id', projectId);
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function (commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    return commentFactory;
 }]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
@@ -564,6 +707,24 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
     }
 ]);
 
+/**
+ * Created by amitav on 12/29/15.
+ */
+myApp.controller('ticketController', ['$scope',
+    function($scope) {
+
+        /*model*/
+        angular.extend($scope, {
+
+        });
+
+        /*methods*/
+        angular.extend($scope, {
+
+        });
+
+    }]);
+
 myApp.factory('timeEntry', ['$http', function($http) {
     var timeEntry = {};
 
@@ -613,6 +774,10 @@ myApp.factory('timeEntry', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-request-backdate-entries');
     }
 
+    timeEntry.getRequestBackDateEntriesById = function(id) {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
+    }
+
     timeEntry.saveRequestBackDateEntry = function(entryData) {
         return $http({
             headers: {
@@ -627,71 +792,76 @@ myApp.factory('timeEntry', ['$http', function($http) {
     return timeEntry;
 }]);
 
-myApp.controller('userController', ['$scope','action', 'timeEntry', '$location', 'userFactory','snackbar', function($scope,  action, timeEntry,$location, userFactory,snackbar) {
-    if ($location.$$path == '/logout') {
+myApp.controller('logoutController', ['$scope', 'userFactory',
+    function($scope, userFactory) {
         userFactory.logoutUser().success(function(response) {
             console.log('logout', response);
             window.location = baseUrl;
         });
     }
-    /*check if users are loaded*/
-    if (action && action.users != undefined) {
-        action.users.success(function(response) {
-            console.log('all users', response);
-            $scope.users = response;
+]);
+
+myApp.controller('userController', ['$scope', 'action', 'timeEntry', '$location', 'userFactory', 'snackbar',
+    function($scope, action, timeEntry, $location, userFactory, snackbar) {
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        if (action && action.allEntries != undefined) {
+            window.document.title = 'Request Backdate entry';
+
+            action.allEntries.success(function(response) {
+                if (response.length != 0) {
+                    console.log('all Entries', response.length);
+                    $scope.allEntries = response;
+                    $scope.showEntries = true;
+                }
+            });
+        }
+
+        /*Variables*/
+        angular.extend($scope, {
+            requestBackdate: {},
+            allEntries: {},
+            showEntries: false
         });
-    }
 
-    if (action && action.allEntries != undefined) {
-        window.document.title = 'Request Backdate entry';
+        /*Methods*/
+        angular.extend($scope, {
+            requestBackdateSubmit: function(requestBackdateForm) {
+                if (requestBackdateForm.$valid) {
+                    /*get all the user ids*/
+                    var userIds = [];
+                    if ($scope.requestBackdate != undefined) {
+                        angular.forEach($scope.requestBackdate.users, function(value, key) {
+                            userIds.push(value.id);
+                        });
+                    }
 
-        action.allEntries.success(function(response) {
-            if (response.length != 0) {
-                console.log('all Entries', response.length);
-                $scope.allEntries = response;
-                $scope.showEntries = true;
-            }
-        });
-    }
+                    /*create the post data*/
+                    var entryData = {
+                        date: $scope.requestBackdate.backdate,
+                        users: userIds,
+                        comment: $scope.requestBackdate.reason
+                    };
 
-    /*Variables*/
-    angular.extend($scope, {
-        requestBackdate: {},
-        allEntries: {},
-        showEntries: false
-    });
-
-    /*Methods*/
-    angular.extend($scope, {
-        requestBackdateSubmit: function(requestBackdateForm) {
-            if (requestBackdateForm.$valid) {
-                /*get all the user ids*/
-                var userIds = [];
-                if ($scope.requestBackdate != undefined) {
-                    angular.forEach($scope.requestBackdate.users, function(value, key) {
-                        userIds.push(value.id);
+                    timeEntry.saveRequestBackDateEntry(entryData).success(function(response) {
+                        console.log('backdate entries', response);
+                        $scope.allEntries = response;
+                        $scope.requestBackdate = {};
+                        $scope.showEntries = true;
+                        snackbar.create("Entry added and mail sent.", 1000);
                     });
                 }
-
-                /*create the post data*/
-                var entryData = {
-                    date: $scope.requestBackdate.backdate,
-                    users: userIds,
-                    comment: $scope.requestBackdate.reason
-                };
-
-                timeEntry.saveRequestBackDateEntry(entryData).success(function(response) {
-                    console.log('backdate entries', response);
-                    $scope.allEntries = response;
-                    $scope.requestBackdate = {};
-                    $scope.showEntries = true;
-                    snackbar.create("Entry added and mail sent.", 1000);
-                });
             }
-        }
-    });
-    
-}]);
+        });
+
+    }
+]);
 
 myApp.factory('userFactory', ['$http', '$cookies',
     function($http, $cookies) {
@@ -712,116 +882,21 @@ myApp.factory('userFactory', ['$http', '$cookies',
 
         userFactory.getUserListByRole = function() {
             /*Code for loading users by role id*/
-            return $http.get(baseUrl + 'api/get-user-list-by-role')
+            var role = [1,3];
+            var jsonData=JSON.stringify(role);
+
+            return $http({
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                url: baseUrl + 'api/get-user-list-by-role',
+                method: 'POST',
+                data:  jsonData
+            });
         }
 
         return userFactory;
     }
 ]);
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        console.log('Project id', projectId);
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function (commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    return commentFactory;
-}]);
-
-myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
-    function($scope, action, timeEntry, snackbar) {
-
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        if (action && action.allEntries != undefined) {
-            window.document.title = 'Backdate entry';
-
-            action.allEntries.success(function(response) {
-                if (response.length != 0) {
-                    console.log('all Entries', response.length);
-                    $scope.allEntries = response;
-                    $scope.showEntries = true;
-                }
-            });
-        }
-
-        /*Variables*/
-        angular.extend($scope, {
-            backdateEntry: {},
-            allEntries: {},
-            showEntries: false
-        });
-
-        /*Methods*/
-        angular.extend($scope, {
-            backdateEntrySubmit: function(backdateEntryForm) {
-                if (backdateEntryForm.$valid) {
-                    /*get all the user ids*/
-                    var userIds = [];
-                    if ($scope.backdateEntry != undefined) {
-                        angular.forEach($scope.backdateEntry.users, function(value, key) {
-                            userIds.push(value.id);
-                        });
-                    }
-
-                    /*create the post data*/
-                    var entryData = {
-                        date: $scope.backdateEntry.backdate,
-                        users: userIds,
-                        comment: $scope.backdateEntry.reason
-                    };
-
-                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
-                        console.log('backdate entries', response);
-                        $scope.allEntries = response;
-                        $scope.backdateEntry = {};
-                        $scope.showEntries = true;
-                        snackbar.create("Entry added and mail sent.", 1000);
-                    });
-                }
-            }
-        });
-    }
-]);
-
-/**
- * Created by amitav on 12/29/15.
- */
-myApp.controller('ticketController', ['$scope',
-    function($scope) {
-
-        /*model*/
-        angular.extend($scope, {
-
-        });
-
-        /*methods*/
-        angular.extend($scope, {
-
-        });
-
-    }]);
 
 //# sourceMappingURL=app.js.map

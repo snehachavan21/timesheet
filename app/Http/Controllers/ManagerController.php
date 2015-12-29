@@ -42,7 +42,7 @@ class ManagerController extends Controller
             $data = [];
             foreach ($timeEntries as $entry) {
                 $data[] = [
-                    'date' => Carbon::createFromFormat('Y-m-d H:m:s', $entry->created_at)->toDateString(),
+                    'date' => Carbon::parse($entry->created_at)->toDateString(),
                     'description' => $entry->description,
                     'time' => $entry->time,
                     'username' => $entry->username,
@@ -101,7 +101,7 @@ class ManagerController extends Controller
                     'Total Time' => $entry->totalTime,
                     'Team' => $entry->team,
                 ];
-            } //echo "ss<pre>";print_r(count($data));die;
+            }
 
             $excel->sheet('Sheet 1', function ($sheet) use ($data) {
                 $last_row = count($data) + 1;
@@ -167,7 +167,7 @@ class ManagerController extends Controller
         $pie->setImage(200, 100, $time_arr);
 
         // colors for the data
-        //$color_arr = ["#ff0000", "#ff8800", "#0022ff", "#989898", "#6600CC", "#FF0000 ", "#660066", "#CCFF00", "#FF0099", "#33ff99", "#33ff11"];
+        $color_arr = ["#ff0000", "#ff8800", "#0022ff", "#989898", "#6600CC", "#FF0000 ", "#660066", "#CCFF00", "#FF0099", "#33ff99", "#33ff11"];
         $pie->setColors($color_arr);
 
         // legends for the data
