@@ -177,6 +177,16 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/add-ticket', {
+            templateUrl: '/templates/tickets/add-ticket.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function() {
+                    return 'single';
+                }
+            }
+        });
+
         $routeProvider.otherwise('/');
     }
 ]);
