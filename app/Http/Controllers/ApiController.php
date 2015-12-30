@@ -7,6 +7,7 @@ use App\Comment;
 use App\Estimate;
 use App\Project;
 use App\Services\Interfaces\SendMailInterface;
+use App\Ticket;
 use App\TimeEntry;
 use App\User;
 use Carbon\Carbon;
@@ -457,5 +458,38 @@ class ApiController extends Controller
         $request_backdate_entries = $timeEntryObj->getLatestRequestBackdateTimeEntries();
 
         return response($request_backdate_entries, 200);
+    }
+
+    public function saveNewTicket(Request $request)
+    {
+        \Log::info(print_r($request->all(), 1));
+
+        try {
+            DB::beginTransaction();
+            $ticket = new Ticket;
+
+            $ticket->title = $request->input('title');
+            $ticket->description = $request->input('description');
+            $ticket->complete_date = $request->input('complete_date');
+            $ticket->project_id = $request->input('project_id');
+            $ticket->assigned_to = $request->input('assigned_to');
+            $ticket->created_by = Auth::user()->id;
+            $ticket->status = 'Assigned';
+            $ticket->save();
+
+            $followers = $request->input('followers');
+            foreach ($followers as $value) {
+                DB::table('ticket_followers')->insert([
+                    'ticket_id' => $ticket->id,
+                    'user_id' => $value,
+                ]);
+            }
+            DB::commit();
+        } catch (\PDOException $e) {
+            DB::rollBack();
+            return response('Some error in saving the ticket', 500);
+        }
+
+        return response('Ticket saved', 201);
     }
 }

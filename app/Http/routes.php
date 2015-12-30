@@ -85,6 +85,7 @@ Route::group(['middleware' => 'auth'], function () {
         get('get-request-backdate-entries', 'ApiController@getRequestBackDateEntries');
         get('get-request-backdate-entries-by-id/{id}', 'ApiController@getRequestBackDateEntryById');
         post('allow-request-backdate-entry', 'ApiController@allowRequestBackdateEntry');
+        post('save-new-ticket', 'ApiController@saveNewTicket');
     });
 
     Route::group(['prefix' => 'spa'], function () {

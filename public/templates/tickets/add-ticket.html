@@ -4,10 +4,69 @@
     </div>
 </div>
 
+<pre>{{ newTicket | json }}</pre>
+
 <div class="row">
-    <div class="col-sm-4">
-        <form name="addTicketForm" ng-submit="saveNewTicket(addTicketForm)">
+    <form name="addTicketForm" ng-submit="saveNewTicket(addTicketForm)">
+        <div class="col-sm-8">
+
+            <!-- title -->
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title"
+                id="title" placeholder="Enter the title of the ticket"
+                ng-model="newTicket.title"
+                class="form-control"/>
+            </div>
+
+            <!-- description -->
+            <div class="form-group">
+                <label>Description</label>
+                <div text-angular ng-model="newTicket.comment" 
+                ta-toolbar="[['bold','italics', 'underline']]"
+                style="font-size: 1.5em"></div>
+            </div>
+
             <button class="btn btn-success">Save</button>
-        </form>
-    </div>
+        </div>
+        <div class="col-sm-4">
+
+            <!-- Project -->
+            <label>Select project</label>
+            <oi-select
+            oi-options="project.name for project in projects track by project.id"
+            ng-model="newTicket.project"
+            multiple
+            multiple-limit="1"
+            placeholder="Select Project"
+            ></oi-select>
+
+            <!-- Users -->
+            <label>Assigned to</label>
+            <oi-select
+            oi-options="user.name for user in users track by user.id"
+            ng-model="newTicket.users"
+            multiple
+            multiple-limit="1"
+            placeholder="Select user to assign"
+            ></oi-select>
+
+            <!-- Followers -->
+            <label>Followers</label>
+            <oi-select
+            oi-options="user.name for user in users track by user.id"
+            ng-model="newTicket.followers"
+            multiple
+            placeholder="Select users to follow this ticket"
+            ></oi-select>
+
+            <!-- Complete date -->
+            <label>Complete date</label>
+            <datepicker date-format="yyyy-M-dd">
+                <input ng-model="newTicket.completeDate" type="text" class="form-control" placeholder="Select date" />
+                <br />
+            </datepicker>
+
+        </div>
+    </form>
 </div>
