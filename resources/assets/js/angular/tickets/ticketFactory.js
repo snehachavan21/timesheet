@@ -12,5 +12,13 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         });
     }
 
+    ticketFactory.getAllTickets = function() {
+        return $http.get(baseUrl + 'api/get-ticket');
+    }
+
+    ticketFactory.getTickeType = function() {
+        return $http.get(baseUrl + 'api/get-ticket-types');
+    }
+
     return ticketFactory;
 }])

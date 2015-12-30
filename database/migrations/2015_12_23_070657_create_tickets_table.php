@@ -20,6 +20,7 @@ class CreateTicketsTable extends Migration
             $table->integer('assigned_to')->unsigned();
             $table->integer('created_by')->unsigned();
             $table->integer('estimate_id')->unsigned()->nullable();
+            $table->string('type');
             $table->string('status');
             $table->timestamp('complete_date');
             $table->timestamps();

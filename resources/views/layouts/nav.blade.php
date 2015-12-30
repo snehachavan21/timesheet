@@ -28,6 +28,7 @@
             @if (Gate::allows('viewTrackerReport', new \App\TimeEntry))
             <li role="separator" class="divider"></li>
             <li><a href="{{ url('spa/time-tracker-report#/manage/back-date-entry') }}"><i class="fa fa-backward"></i> Backdate Entry</a></li>
+            <li><a href="{{ url('spa/time-tracker-report#/ticket/list') }}"><i class="fa fa-bug"></i> Tickets</a></li>
             <li><a href="{{ url('spa/time-tracker-report#/projects') }}"><i class="fa fa-briefcase"></i> Projects</a></li>
             <li><a href="{{ url('spa/time-tracker-report') }}"><i class="fa fa-table"></i> Reports</a></li>
             <li><a href="{{ url('spa/time-tracker-download') }}"><i class="fa fa-file-excel-o"></i> Download Report</a></li>

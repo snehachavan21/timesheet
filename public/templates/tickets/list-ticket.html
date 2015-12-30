@@ -1,0 +1,48 @@
+<div class="row">
+    <div class="col-sm-12">
+        <h3>List of Tickets</h3>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <p>Filters</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12" ng-hide="viewTickets">
+        <i class="fa fa-refresh fa-spin fa-5x"></i>
+    </div>
+
+    <div class="col-sm-12" ng-show="viewTickets">
+        <a href="#/ticket/add" class="btn btn-primary pull-right"><i class="fa fa-plus"></i> Add</a>
+        <br>
+        <br>
+        <table class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Project</th>
+                    <th>Assigned To</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Target</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr ng-repeat="ticket in tickets">
+                    <td>{{ticket.id}}</td>
+                    <td>{{ticket.title}}</td>
+                    <td>{{ticket.project}}</td>
+                    <td>{{ticket.assigned_to}}</td>
+                    <td>{{ticket.type}}</td>
+                    <td>{{ticket.status}}</td>
+                    <td>{{momentTime(ticket.complete_date, "Do MMM")}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

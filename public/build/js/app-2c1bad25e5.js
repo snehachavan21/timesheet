@@ -61,6 +61,9 @@ myApp.controller('globalController', ['$scope', '$location',
             },
             timeAgo: function(string) {
                 return moment(string).fromNow();
+            },
+            momentTime: function(string, format) {
+                return moment(string).format(format);
             }
         })
     }
@@ -232,15 +235,32 @@ myApp.config(['$routeProvider', '$locationProvider',
         });
 
         /*Ticket section*/
+        $routeProvider.when('/ticket/list', {
+            templateUrl: '/templates/tickets/list-ticket.html',
+            controller: 'ticketController',
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory) {
+                    return {
+                        tickets: ticketFactory.getAllTickets(),
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/add', {
             templateUrl: '/templates/tickets/add-ticket.html',
             controller: 'ticketController',
             roles: ['Admin', 'Project Manager'],
             resolve: {
-                action: function(projectFactory, userFactory) {
+                action: function(projectFactory, userFactory, ticketFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
-                        users: userFactory.getUserList()
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
                     }
                 }
             }
@@ -249,6 +269,16 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.otherwise('/');
     }
 ]);
+
+myApp.factory('clientFactory', ['$http', function($http) {
+    var clientFactory = {};
+
+    clientFactory.getClientList = function() {
+        return $http.get(baseUrl + 'api/get-client-list');
+    }
+
+    return clientFactory;
+}]);
 
 myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
     function($scope, action, timeEntry, snackbar) {
@@ -311,6 +341,31 @@ myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar'
         });
     }
 ]);
+
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        console.log('Project id', projectId);
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function (commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    return commentFactory;
+}]);
 
 myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
     function($scope, timeEntry, $parse) {
@@ -429,6 +484,181 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
         });
     }
 ]);
+
+/**
+ * Created by amitav on 12/29/15.
+ */
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar',
+    function($scope, action, ticketFactory, $location, snackbar) {
+
+        /*check if projects are loaded*/
+        if (action && action.projects != undefined) {
+            action.projects.success(function(response) {
+                console.log('all projects', response);
+                $scope.projects = response;
+            });
+        }
+
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        /*load ticket type*/
+        if (action && action.type != undefined) {
+            action.type.success(function(response) {
+                console.log('all type', response);
+                $scope.ticketType = response;
+            });
+        }
+
+        /*load tickets*/
+        if (action && action.tickets != undefined) {
+            action.tickets.success(function(response) {
+                console.log('all tickets', response);
+                $scope.tickets = response;
+                $scope.viewTickets = true;
+            });
+        }
+
+        /*model*/
+        angular.extend($scope, {
+            newTicket: {
+                type: 'none'
+            },
+            projects: {},
+            ticketType: {},
+            tickets: {},
+            viewTickets: false
+        });
+
+        /*methods*/
+        angular.extend($scope, {
+            saveNewTicket: function(addTicketForm) {
+                if (addTicketForm.$valid) {
+                    // console.log($scope.newTicket);
+                    var ticketData = {
+                        title: $scope.newTicket.title,
+                        description: $scope.newTicket.comment,
+                        complete_date: $scope.newTicket.completeDate,
+                        project_id: $scope.newTicket.project[0].id,
+                        assigned_to: $scope.newTicket.users[0].id,
+                        followers: [],
+                        type: $scope.newTicket.type
+                    };
+
+                    /*Adding follower ids*/
+                    angular.forEach($scope.newTicket.followers, function(value, key) {
+                        ticketData.followers.push(value.id);
+                    });
+
+                    ticketFactory.saveTicket(ticketData).success(function(response) {
+                        console.log(response);
+                        $location.path('/ticket/list');
+                        snackbar.create("New ticket added.", 1000);
+                        console.log('Snakc');
+                    });
+                }
+            }
+        });
+
+    }
+]);
+
+myApp.factory('ticketFactory', ['$http', function($http) {
+    var ticketFactory = {};
+
+    ticketFactory.saveTicket = function(ticketData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-new-ticket',
+            method: 'POST',
+            data: ticketData
+        });
+    }
+
+    ticketFactory.getAllTickets = function() {
+        return $http.get(baseUrl + 'api/get-ticket');
+    }
+
+    ticketFactory.getTickeType = function() {
+        return $http.get(baseUrl + 'api/get-ticket-types');
+    }
+
+    return ticketFactory;
+}])
+
+myApp.factory('timeEntry', ['$http', function($http) {
+    var timeEntry = {};
+
+    timeEntry.getEntries = function() {
+        return $http.get(baseUrl + 'api/time-report');
+    }
+
+    /*timeEntry.getUserList = function() {
+        return $http.get(baseUrl + 'api/get-user-list');
+    }*/
+
+    timeEntry.getSearchResult = function(filterParams) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/time-report-filter',
+            method: 'POST',
+            data: filterParams
+        });
+    }
+
+    timeEntry.getTimeSheetEntryByDate = function() {
+        return $http.get(baseUrl + 'api/get-timeentry-by-date');
+    }
+
+    timeEntry.getEntriesForEstimate = function(estimateId) {
+        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
+    }
+
+    timeEntry.getBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-backdate-entries');
+    }
+
+    timeEntry.saveBackDateEntry = function(entryData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/allow-backdate-entry',
+            method: 'POST',
+            data: entryData
+        });
+    }
+
+    timeEntry.getRequestBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries');
+    }
+
+    timeEntry.getRequestBackDateEntriesById = function(id) {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
+    }
+
+    timeEntry.saveRequestBackDateEntry = function(entryData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/allow-request-backdate-entry',
+            method: 'POST',
+            data: entryData
+        });
+    }
+
+    return timeEntry;
+}]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
     var estimateFactory = {};
@@ -674,182 +904,6 @@ myApp.factory('projectFactory', ['$http', function($http) {
 
     return projectFactory;
 }]);
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        console.log('Project id', projectId);
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function (commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    return commentFactory;
-}]);
-
-myApp.factory('clientFactory', ['$http', function($http) {
-    var clientFactory = {};
-
-    clientFactory.getClientList = function() {
-        return $http.get(baseUrl + 'api/get-client-list');
-    }
-
-    return clientFactory;
-}]);
-
-myApp.factory('timeEntry', ['$http', function($http) {
-    var timeEntry = {};
-
-    timeEntry.getEntries = function() {
-        return $http.get(baseUrl + 'api/time-report');
-    }
-
-    /*timeEntry.getUserList = function() {
-        return $http.get(baseUrl + 'api/get-user-list');
-    }*/
-
-    timeEntry.getSearchResult = function(filterParams) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/time-report-filter',
-            method: 'POST',
-            data: filterParams
-        });
-    }
-
-    timeEntry.getTimeSheetEntryByDate = function() {
-        return $http.get(baseUrl + 'api/get-timeentry-by-date');
-    }
-
-    timeEntry.getEntriesForEstimate = function(estimateId) {
-        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
-    }
-
-    timeEntry.getBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-backdate-entries');
-    }
-
-    timeEntry.saveBackDateEntry = function(entryData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/allow-backdate-entry',
-            method: 'POST',
-            data: entryData
-        });
-    }
-
-    timeEntry.getRequestBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries');
-    }
-
-    timeEntry.getRequestBackDateEntriesById = function(id) {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
-    }
-
-    timeEntry.saveRequestBackDateEntry = function(entryData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/allow-request-backdate-entry',
-            method: 'POST',
-            data: entryData
-        });
-    }
-
-    return timeEntry;
-}]);
-
-/**
- * Created by amitav on 12/29/15.
- */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory',
-    function($scope, action, ticketFactory) {
-
-        /*check if projects are loaded*/
-        if (action && action.projects != undefined) {
-            action.projects.success(function(response) {
-                console.log('all projects', response);
-                $scope.projects = response;
-            });
-        }
-
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        /*model*/
-        angular.extend($scope, {
-            newTicket: {},
-            projects: {}
-        });
-
-        /*methods*/
-        angular.extend($scope, {
-            saveNewTicket: function(addTicketForm) {
-                if (addTicketForm.$valid) {
-                    // console.log($scope.newTicket);
-                    var ticketData = {
-                        title: $scope.newTicket.title,
-                        description: $scope.newTicket.comment,
-                        complete_date: $scope.newTicket.completeDate,
-                        project_id: $scope.newTicket.project[0].id,
-                        assigned_to: $scope.newTicket.users[0].id,
-                        followers: []
-                    };
-
-                    angular.forEach($scope.newTicket.followers, function(value, key) {
-                        ticketData.followers.push(value.id);
-                    });
-
-                    console.log(ticketData);
-                    ticketFactory.saveTicket(ticketData).success(function(response) {
-                        console.log(response);
-                    });
-                }
-            }
-        });
-
-    }
-]);
-
-myApp.factory('ticketFactory', ['$http', function($http) {
-    var ticketFactory = {};
-
-    ticketFactory.saveTicket = function(ticketData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-new-ticket',
-            method: 'POST',
-            data: ticketData
-        });
-    }
-
-    return ticketFactory;
-}])
 
 myApp.controller('logoutController', ['$scope', 'userFactory',
     function($scope, userFactory) {

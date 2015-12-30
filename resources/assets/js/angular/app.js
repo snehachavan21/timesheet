@@ -61,6 +61,9 @@ myApp.controller('globalController', ['$scope', '$location',
             },
             timeAgo: function(string) {
                 return moment(string).fromNow();
+            },
+            momentTime: function(string, format) {
+                return moment(string).format(format);
             }
         })
     }
@@ -232,15 +235,32 @@ myApp.config(['$routeProvider', '$locationProvider',
         });
 
         /*Ticket section*/
+        $routeProvider.when('/ticket/list', {
+            templateUrl: '/templates/tickets/list-ticket.html',
+            controller: 'ticketController',
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory) {
+                    return {
+                        tickets: ticketFactory.getAllTickets(),
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/add', {
             templateUrl: '/templates/tickets/add-ticket.html',
             controller: 'ticketController',
             roles: ['Admin', 'Project Manager'],
             resolve: {
-                action: function(projectFactory, userFactory) {
+                action: function(projectFactory, userFactory, ticketFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
-                        users: userFactory.getUserList()
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
                     }
                 }
             }

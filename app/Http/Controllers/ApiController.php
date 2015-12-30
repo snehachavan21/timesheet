@@ -473,6 +473,7 @@ class ApiController extends Controller
             $ticket->complete_date = $request->input('complete_date');
             $ticket->project_id = $request->input('project_id');
             $ticket->assigned_to = $request->input('assigned_to');
+            $ticket->type = $request->input('type');
             $ticket->created_by = Auth::user()->id;
             $ticket->status = 'Assigned';
             $ticket->save();
@@ -491,5 +492,17 @@ class ApiController extends Controller
         }
 
         return response('Ticket saved', 201);
+    }
+
+    public function getAllTickets()
+    {
+        $select = ['t.*', 'u.name as assigned_to', 'p.name as project'];
+        $query = DB::table('tickets as t');
+        $query->select($select);
+        $query->join('users as u', 'u.id', '=', 't.assigned_to', 'left');
+        $query->join('projects as p', 'p.id', '=', 't.project_id', 'left');
+        $query->orderBy('t.id', 'desc');
+        $result = $query->get();
+        return $result;
     }
 }
