@@ -496,13 +496,13 @@ class ApiController extends Controller
 
     public function getAllTickets()
     {
-        $select = ['t.*', 'u.name as assigned_to', 'p.name as project'];
-        $query = DB::table('tickets as t');
-        $query->select($select);
-        $query->join('users as u', 'u.id', '=', 't.assigned_to', 'left');
-        $query->join('projects as p', 'p.id', '=', 't.project_id', 'left');
-        $query->orderBy('t.id', 'desc');
-        $result = $query->get();
-        return $result;
+        $ticket = new Ticket;
+        return response($ticket->getTickets(), 200);
+    }
+
+    public function getTicketById($id)
+    {
+        $ticket = new Ticket;
+        return response(['data' => $ticket->getTicketById($id)], 200);
     }
 }

@@ -254,13 +254,27 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/ticket/add', {
             templateUrl: '/templates/tickets/add-ticket.html',
             controller: 'ticketController',
-            roles: ['Admin', 'Project Manager'],
             resolve: {
                 action: function(projectFactory, userFactory, ticketFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType()
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId', {
+            templateUrl: '/templates/tickets/view-ticket.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory, $route) {
+                    return {
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType(),
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId)
                     }
                 }
             }

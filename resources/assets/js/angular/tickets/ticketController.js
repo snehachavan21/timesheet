@@ -9,6 +9,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             action.projects.success(function(response) {
                 console.log('all projects', response);
                 $scope.projects = response;
+                $scope.showTicketForm = true;
             });
         }
 
@@ -37,15 +38,27 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*loading single ticket*/
+        if (action && action.ticket != undefined) {
+            $scope.showTicketForm = false;
+            action.ticket.success(function(response) {
+                console.log('thisTicket', response);
+                $scope.newTicket = response.data;
+                $scope.showTicketForm = true;
+            });
+        }
+
         /*model*/
         angular.extend($scope, {
+            formUrl: baseUrl + 'templates/tickets/ticket-form.html',
+            showTicketForm: false,
             newTicket: {
                 type: 'none'
             },
             projects: {},
             ticketType: {},
             tickets: {},
-            viewTickets: false
+            viewTickets: true
         });
 
         /*methods*/
@@ -72,8 +85,12 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("New ticket added.", 1000);
-                        console.log('Snakc');
                     });
+                }
+            },
+            updateTicket: function(updateTicketForm) {
+                if (updateTicketForm.$valid) {
+                    console.log($scope.newTicket);
                 }
             }
         });

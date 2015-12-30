@@ -88,6 +88,7 @@ Route::group(['middleware' => 'auth'], function () {
         post('save-new-ticket', 'ApiController@saveNewTicket');
         get('get-ticket-types', 'TicketController@getTicketTypes');
         get('get-ticket', 'ApiController@getAllTickets');
+        get('get-ticket-by-id/{id}', 'ApiController@getTicketById');
     });
 
     Route::group(['prefix' => 'spa'], function () {

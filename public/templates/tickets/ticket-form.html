@@ -1,0 +1,84 @@
+<div class="col-sm-12" ng-hide="showTicketForm">
+    <i class="fa fa-refresh fa-spin fa-5x"></i>
+</div>
+
+<div class="col-sm-8" ng-show="showTicketForm">
+
+    <!-- title -->
+    <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title"
+        id="title" placeholder="Enter the title of the ticket"
+        ng-model="newTicket.title"
+        class="form-control"/>
+    </div>
+
+    <!-- description -->
+    <div class="form-group">
+        <label>Description</label>
+        <div text-angular ng-model="newTicket.comment" 
+        ta-toolbar="[['bold','italics', 'underline']]"
+        style="font-size: 1.5em"></div>
+    </div>
+
+    <button class="btn btn-success">Save</button>
+    <a href="#/ticket/list" class="btn btn-warning">Back</a>
+</div>
+<div class="col-sm-4" ng-show="showTicketForm">
+
+    <div class="form-group">
+        <!-- Ticket type -->
+        <label>Select the ticket type</label>
+        <select class="form-control" ng-model="newTicket.type">
+            <option selected value="none">Select</option>
+            <option ng-repeat="(key, value) in ticketType" value="{{key}}">{{value}}</option>
+        </select>
+    </div>
+
+
+    <div class="form-group">
+        <!-- Project -->
+        <label>Select project</label>
+        <oi-select
+        oi-options="project.name for project in projects track by project.id"
+        ng-model="newTicket.project"
+        multiple
+        multiple-limit="1"
+        placeholder="Select Project"
+        ></oi-select>
+    </div>
+
+    <div class="form-group">
+        <!-- Users -->
+        <label>Assigned to</label>
+        <oi-select
+        oi-options="user.name for user in users track by user.id"
+        ng-model="newTicket.users"
+        multiple
+        multiple-limit="1"
+        placeholder="Select user to assign"
+        ></oi-select>
+    </div>
+
+    <div class="form-group">
+        <!-- Followers -->
+        <label>Followers</label>
+        <oi-select
+        name="Followers"
+        oi-options="user.name for user in users track by user.id"
+        ng-model="newTicket.followers"
+        multiple
+        placeholder="Select users to follow this ticket"
+        ></oi-select>
+    </div>
+
+    <div class="form-group">
+        <!-- Complete date -->
+        <label>Complete date</label>
+        <datepicker date-format="yyyy-M-dd">
+            <input ng-model="newTicket.completeDate" type="text" class="form-control" placeholder="Select date" />
+            <br />
+        </datepicker>
+    </div>
+
+</div>
