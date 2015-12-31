@@ -1,0 +1,12 @@
+<div class="row">
+    <div class="col-sm-12">
+        <h3>Ticket: {{newTicket.title}}</h3>
+    </div>
+</div>
+
+<div class="row">
+    <form name="updateTicketForm" ng-submit="updateTicket(updateTicketForm)">
+        <div ng-include="formUrl"></div>
+    </form>
+</div>
+<div class="snackbar-container" data-snackbar="true"></div>

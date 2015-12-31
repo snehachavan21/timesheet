@@ -1,12 +1,5 @@
 myApp.controller('userController', ['$scope', 'action', 'timeEntry', '$location', 'userFactory', 'snackbar',
     function($scope, action, timeEntry, $location, userFactory, snackbar) {
-        console.log(123);
-        if ($location.$$path == '/logout') {
-            userFactory.logoutUser().success(function(response) {
-                console.log('logout', response);
-                window.location = baseUrl;
-            });
-        }
         /*check if users are loaded*/
         if (action && action.users != undefined) {
             action.users.success(function(response) {
