@@ -253,6 +253,7 @@ myApp.config(['$routeProvider', '$locationProvider',
 
         $routeProvider.when('/ticket/add', {
             templateUrl: '/templates/tickets/add-ticket.html',
+            roles: ['Admin', 'Project Manager'],
             controller: 'ticketController',
             resolve: {
                 action: function(projectFactory, userFactory, ticketFactory) {
