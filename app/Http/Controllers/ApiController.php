@@ -7,6 +7,7 @@ use App\Comment;
 use App\Estimate;
 use App\Project;
 use App\Services\Interfaces\SendMailInterface;
+use App\Ticket;
 use App\TimeEntry;
 use App\User;
 use Carbon\Carbon;
@@ -58,22 +59,11 @@ class ApiController extends Controller
      *
      * @return mixed
      */
-    public function getUserListByRole()
+    public function getUserListByRole(Request $request)
     {
-
-        $select = [
-            'u.name as name',
-            'u.id as id',
-        ];
-        $query = DB::table('users as u');
-        $query->select($select);
-        $query->join('roles_users as ru', 'u.id', '=', 'ru.user_id');
-        $query->join('roles as r', 'r.id', '=', 'ru.role_id');
-        $query->whereRaw('ru.role_id IN (1,3)');
-        //$query->where('ru.role_id', $roleId);
-        $result = $query->get();
-        return $result;
-        //return User::orderBy('name')->get();
+        $roleIds = $request->input();
+        $userObj = new User;
+        return $userObj->getUserListByRole($roleIds);
     }
 
     /**
@@ -325,6 +315,11 @@ class ApiController extends Controller
         return response($request_backdate_entries, 200);
     }
 
+    public function getRequestBackDateEntryById($id)
+    {
+        return DB::table('backdate_requests')->where('id', '=', $id)->get();
+    }
+
     public function allowBackdateEntry(Request $request, SendMailInterface $mail)
     {
         // return $request->all();
@@ -463,5 +458,83 @@ class ApiController extends Controller
         $request_backdate_entries = $timeEntryObj->getLatestRequestBackdateTimeEntries();
 
         return response($request_backdate_entries, 200);
+    }
+
+    public function saveNewTicket(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $ticket = new Ticket;
+
+            $ticket->title = $request->input('title');
+            $ticket->description = $request->input('description');
+            $ticket->complete_date = $request->input('complete_date');
+            $ticket->project_id = $request->input('project_id');
+            $ticket->assigned_to = $request->input('assigned_to');
+            $ticket->type = $request->input('type');
+            $ticket->created_by = Auth::user()->id;
+            $ticket->status = 'Assigned';
+            $ticket->save();
+
+            $followers = $request->input('followers');
+            foreach ($followers as $value) {
+                DB::table('ticket_followers')->insert([
+                    'ticket_id' => $ticket->id,
+                    'user_id' => $value,
+                ]);
+            }
+            DB::commit();
+        } catch (\PDOException $e) {
+            DB::rollBack();
+            return response('Some error in saving the ticket', 500);
+        }
+
+        return response('Ticket saved', 201);
+    }
+
+    public function getAllTickets()
+    {
+        $ticket = new Ticket;
+        return response($ticket->getTickets(), 200);
+    }
+
+    public function getTicketById($id)
+    {
+        $ticket = new Ticket;
+        return response(['data' => $ticket->getTicketById($id)], 200);
+    }
+
+    public function updateTicket(Request $request)
+    {
+        // \Log::info(print_r($request->all(), 1));
+
+        $ticket = Ticket::findOrFail($request->input('id'));
+        $ticket->title = $request->input('title');
+        $ticket->description = $request->input('description');
+        $ticket->complete_date = $request->input('complete_date');
+        $ticket->project_id = $request->input('project_id');
+        $ticket->assigned_to = $request->input('assigned_to');
+        $ticket->type = $request->input('type');
+        $ticket->save();
+
+        $followers = $request->input('followers');
+        DB::table('ticket_followers')->where('ticket_id', $request->input('id'))->delete();
+        foreach ($followers as $value) {
+            DB::table('ticket_followers')->insert([
+                'ticket_id' => $ticket->id,
+                'user_id' => $value,
+            ]);
+        }
+
+        return response(['data' => 'Ticket updated'], 200);
+    }
+
+    public function getMyTickets()
+    {
+        $ticket = new Ticket;
+
+        $myTickets = $ticket->getMyTickets();
+
+        return response(['data' => $myTickets], 200);
     }
 }

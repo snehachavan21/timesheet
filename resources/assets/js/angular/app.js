@@ -9,14 +9,41 @@ var myApp = angular.module('myApp', [
     'textAngular'
 ]);
 
-myApp.run(['userFactory', '$cookies', function(userFactory, $cookies) {
-    if ($cookies.get('userObj') === undefined) {
-        userFactory.getUserObj().success(function(response) {
-            console.log('created user object', response);
-            $cookies.putObject('userObj', response);
-        });
+myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
+    function(userFactory, $cookies, $rootScope, $location) {
+        /*check if auth object is available*/
+        if ($cookies.get('userObj') === undefined) {
+            userFactory.getUserObj().success(function(response) {
+                console.log('created user object', response);
+                $cookies.putObject('userObj', response);
+            });
+        }
+
+        /*handling the route change to check if the current url is access based*/
+        $rootScope.$on("$routeChangeStart",
+            function(event, next, current) {
+                if (next.$$route.roles !== undefined) {
+                    var access = false;
+                    var userObj = $cookies.getObject('userObj');
+                    console.log('userObj', userObj);
+                    angular.forEach(next.$$route.roles, function(roleValue, roleKey) {
+                        console.log(roleValue);
+                        angular.forEach(userObj.roles, function(userValue, userKey) {
+                            console.log(userValue);
+                            if (roleValue == userValue.roleName) {
+                                access = true;
+                            }
+                        });
+                    });
+
+                    console.log(access);
+                    if (access == false) {
+                        $location.path('access-denied');
+                    }
+                }
+            });
     }
-}]);
+]);
 
 myApp.filter('unsafe', function($sce) {
     return $sce.trustAsHtml;
@@ -34,6 +61,9 @@ myApp.controller('globalController', ['$scope', '$location',
             },
             timeAgo: function(string) {
                 return moment(string).fromNow();
+            },
+            momentTime: function(string, format) {
+                return moment(string).format(format);
             }
         })
     }
@@ -49,12 +79,18 @@ myApp.config(['$routeProvider', '$locationProvider',
 
         $routeProvider.when('/logout', {
             templateUrl: '/templates/users/user-logout.html',
-            controller: 'userController'
+            controller: 'logoutController'
+        });
+
+        $routeProvider.when('/access-denied', {
+            templateUrl: '/templates/admin/access-denied.html',
+            controller: 'dashboardController'
         });
 
         $routeProvider.when('/report', {
             templateUrl: '/templates/manager/reports.html',
-            controller: 'reportController'
+            controller: 'reportController',
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects', {
@@ -72,6 +108,7 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/projects/add', {
             templateUrl: '/templates/projects/add-project.html',
             controller: 'projectController',
+            roles: ['Admin', 'Project Manager'],
             resolve: {
                 action: function(clientFactory) {
                     return {
@@ -94,13 +131,15 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/projects/:pid/comments', {
             templateUrl: '/templates/projects/project-comments.html',
             controller: 'projectController',
+            roles: ['Admin', 'Project Manager'],
             resolve: {
                 action: function(commentFactory, $route) {
                     return {
                         comments: commentFactory.getProjectComments($route.current.params.pid)
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects/:id/estimate/add', {
@@ -110,7 +149,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function() {
                     return 'single';
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/projects/estimate/:estimateId', {
@@ -120,7 +160,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function() {
                     return 'single';
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         /*Management URLs*/
@@ -134,7 +175,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/manage/view-back-date-entry/:backdateentryId', {
@@ -147,7 +189,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/manage/view-back-date-entry/:backdateentryId', {
@@ -160,7 +203,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         allEntries: timeEntry.getBackDateEntries()
                     };
                 }
-            }
+            },
+            roles: ['Admin', 'Project Manager']
         });
 
         $routeProvider.when('/user/request-backdate-entry', {
@@ -173,6 +217,78 @@ myApp.config(['$routeProvider', '$locationProvider',
                         allEntries: timeEntry.getRequestBackDateEntries()
                     };
 
+                }
+            }
+        });
+
+        $routeProvider.when('/user/view-request-backdate/:backdateentryId', {
+            templateUrl: '/templates/users/view-request-backdate.html',
+            controller: 'userController',
+            resolve: {
+                action: function(userFactory, timeEntry, $route) {
+                    return {
+                        singleEntry: timeEntry.getRequestBackDateEntriesById($route.current.params.backdateentryId)
+
+                    };
+                }
+            }
+        });
+
+        /*Ticket section*/
+        $routeProvider.when('/ticket/list', {
+            templateUrl: '/templates/tickets/list-ticket.html',
+            controller: 'ticketController',
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory) {
+                    return {
+                        tickets: ticketFactory.getAllTickets(),
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/add', {
+            templateUrl: '/templates/tickets/add-ticket.html',
+            roles: ['Admin', 'Project Manager'],
+            controller: 'ticketController',
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory) {
+                    return {
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType()
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId', {
+            templateUrl: '/templates/tickets/view-ticket.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory, $route) {
+                    return {
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType(),
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/my-tickets', {
+            templateUrl: '/templates/tickets/my-tickets.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory) {
+                    return {
+                        myTickets: ticketFactory.getMyTickets(),
+                    }
                 }
             }
         });

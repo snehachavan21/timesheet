@@ -69,3 +69,9 @@
 .comment-area {
   width: 100%;
 }
+
+/*text editor*/
+
+.ta-text.ta-editor {
+  border: 1px solid #cfcfcf;
+}
