@@ -90,7 +90,14 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/report', {
             templateUrl: '/templates/manager/reports.html',
             controller: 'reportController',
-            roles: ['Admin', 'Project Manager']
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(clientFactory) {
+                    return {
+                        clients: clientFactory.getClientList()
+                    }
+                }
+            }
         });
 
         $routeProvider.when('/projects', {
@@ -296,6 +303,41 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.otherwise('/');
     }
 ]);
+
+myApp.factory('clientFactory', ['$http', function($http) {
+    var clientFactory = {};
+
+    clientFactory.getClientList = function() {
+        return $http.get(baseUrl + 'api/get-client-list');
+    }
+
+    return clientFactory;
+}]);
+
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        console.log('Project id', projectId);
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function (commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    return commentFactory;
+}]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
     var estimateFactory = {};
@@ -542,103 +584,6 @@ myApp.factory('projectFactory', ['$http', function($http) {
     return projectFactory;
 }]);
 
-myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
-    function($scope, action, timeEntry, snackbar) {
-
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        if (action && action.allEntries != undefined) {
-            window.document.title = 'Backdate entry';
-
-            action.allEntries.success(function(response) {
-                if (response.length != 0) {
-                    console.log('all Entries', response.length);
-                    $scope.allEntries = response;
-                    $scope.showEntries = true;
-                }
-            });
-        }
-
-        /*Variables*/
-        angular.extend($scope, {
-            backdateEntry: {},
-            allEntries: {},
-            showEntries: false
-        });
-
-        /*Methods*/
-        angular.extend($scope, {
-            backdateEntrySubmit: function(backdateEntryForm) {
-                if (backdateEntryForm.$valid) {
-                    /*get all the user ids*/
-                    var userIds = [];
-                    if ($scope.backdateEntry != undefined) {
-                        angular.forEach($scope.backdateEntry.users, function(value, key) {
-                            userIds.push(value.id);
-                        });
-                    }
-
-                    /*create the post data*/
-                    var entryData = {
-                        date: $scope.backdateEntry.backdate,
-                        users: userIds,
-                        comment: $scope.backdateEntry.reason
-                    };
-
-                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
-                        console.log('backdate entries', response);
-                        $scope.allEntries = response;
-                        $scope.backdateEntry = {};
-                        $scope.showEntries = true;
-                        snackbar.create("Entry added and mail sent.", 1000);
-                    });
-                }
-            }
-        });
-    }
-]);
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        console.log('Project id', projectId);
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function (commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    return commentFactory;
-}]);
-
-myApp.factory('clientFactory', ['$http', function($http) {
-    var clientFactory = {};
-
-    clientFactory.getClientList = function() {
-        return $http.get(baseUrl + 'api/get-client-list');
-    }
-
-    return clientFactory;
-}]);
-
 myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
     function($scope, timeEntry, $parse) {
         timeEntry.getTimeSheetEntryByDate().success(function(response) {
@@ -660,8 +605,16 @@ myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
     }
 ]);
 
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory) {
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action) {
+
+        /*check if clients are loaded*/
+        if (action && action.clients != undefined) {
+            action.clients.success(function(response) {
+                console.log('all clients', response);
+                $scope.clients = response;
+            });
+        }
 
         timeEntry.getEntries().then(function(response) {
                 console.log('time entries', response.data);
@@ -698,6 +651,7 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             filters: {},
             users: [],
             projects: [],
+            clients: {},
             dt: new Date()
         });
 
@@ -717,6 +671,13 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                     });
                 }
 
+                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
+                    queryParams.clients = [];
+                    angular.forEach($scope.filters.clients, function(value, key) {
+                        queryParams.clients.push(value.name);
+                    });
+                }
+
                 if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
                     queryParams.projects = [];
                     angular.forEach($scope.filters.project, function(value, key) {
@@ -732,8 +693,6 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                     queryParams.endDate = $scope.filters.endDate;
                     var startDateOfYear = moment(queryParams.startDate).dayOfYear();
                     var endDateOfYear = moment(queryParams.endDate).dayOfYear();
-
-                    console.log(startDateOfYear, endDateOfYear);
 
                     if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
                         alert('End date is before start date.');
@@ -754,113 +713,6 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                 $scope.filters = {};
             }
         });
-    }
-]);
-
-myApp.controller('logoutController', ['$scope', 'userFactory',
-    function($scope, userFactory) {
-        userFactory.logoutUser().success(function(response) {
-            console.log('logout', response);
-            window.location = baseUrl;
-        });
-    }
-]);
-
-myApp.controller('userController', ['$scope', 'action', 'timeEntry', '$location', 'userFactory', 'snackbar',
-    function($scope, action, timeEntry, $location, userFactory, snackbar) {
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        if (action && action.allEntries != undefined) {
-            window.document.title = 'Request Backdate entry';
-
-            action.allEntries.success(function(response) {
-                if (response.length != 0) {
-                    console.log('all Entries', response.length);
-                    $scope.allEntries = response;
-                    $scope.showEntries = true;
-                }
-            });
-        }
-
-        /*Variables*/
-        angular.extend($scope, {
-            requestBackdate: {},
-            allEntries: {},
-            showEntries: false
-        });
-
-        /*Methods*/
-        angular.extend($scope, {
-            requestBackdateSubmit: function(requestBackdateForm) {
-                if (requestBackdateForm.$valid) {
-                    /*get all the user ids*/
-                    var userIds = [];
-                    if ($scope.requestBackdate != undefined) {
-                        angular.forEach($scope.requestBackdate.users, function(value, key) {
-                            userIds.push(value.id);
-                        });
-                    }
-
-                    /*create the post data*/
-                    var entryData = {
-                        date: $scope.requestBackdate.backdate,
-                        users: userIds,
-                        comment: $scope.requestBackdate.reason
-                    };
-
-                    timeEntry.saveRequestBackDateEntry(entryData).success(function(response) {
-                        console.log('backdate entries', response);
-                        $scope.allEntries = response;
-                        $scope.requestBackdate = {};
-                        $scope.showEntries = true;
-                        snackbar.create("Entry added and mail sent.", 1000);
-                    });
-                }
-            }
-        });
-
-    }
-]);
-
-myApp.factory('userFactory', ['$http', '$cookies',
-    function($http, $cookies) {
-        var userFactory = {};
-
-        userFactory.logoutUser = function() {
-            $cookies.remove('userObj');
-            return $http.get(baseUrl + 'logout');
-        }
-
-        userFactory.getUserList = function() {
-            return $http.get(baseUrl + 'api/get-user-list');
-        }
-
-        userFactory.getUserObj = function() {
-            return $http.get(baseUrl + 'api/get-user_data');
-        }
-
-        userFactory.getUserListByRole = function() {
-            /*Code for loading users by role id*/
-            var role = [1,3];
-            var jsonData=JSON.stringify(role);
-
-            return $http({
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                url: baseUrl + 'api/get-user-list-by-role',
-                method: 'POST',
-                data:  jsonData
-            });
-        }
-
-        return userFactory;
     }
 ]);
 
@@ -930,6 +782,68 @@ myApp.factory('timeEntry', ['$http', function($http) {
 
     return timeEntry;
 }]);
+
+myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
+    function($scope, action, timeEntry, snackbar) {
+
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        if (action && action.allEntries != undefined) {
+            window.document.title = 'Backdate entry';
+
+            action.allEntries.success(function(response) {
+                if (response.length != 0) {
+                    console.log('all Entries', response.length);
+                    $scope.allEntries = response;
+                    $scope.showEntries = true;
+                }
+            });
+        }
+
+        /*Variables*/
+        angular.extend($scope, {
+            backdateEntry: {},
+            allEntries: {},
+            showEntries: false
+        });
+
+        /*Methods*/
+        angular.extend($scope, {
+            backdateEntrySubmit: function(backdateEntryForm) {
+                if (backdateEntryForm.$valid) {
+                    /*get all the user ids*/
+                    var userIds = [];
+                    if ($scope.backdateEntry != undefined) {
+                        angular.forEach($scope.backdateEntry.users, function(value, key) {
+                            userIds.push(value.id);
+                        });
+                    }
+
+                    /*create the post data*/
+                    var entryData = {
+                        date: $scope.backdateEntry.backdate,
+                        users: userIds,
+                        comment: $scope.backdateEntry.reason
+                    };
+
+                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
+                        console.log('backdate entries', response);
+                        $scope.allEntries = response;
+                        $scope.backdateEntry = {};
+                        $scope.showEntries = true;
+                        snackbar.create("Entry added and mail sent.", 1000);
+                    });
+                }
+            }
+        });
+    }
+]);
 
 /**
  * Created by amitav on 12/29/15.
@@ -1105,5 +1019,112 @@ myApp.factory('ticketFactory', ['$http', function($http) {
 
     return ticketFactory;
 }])
+
+myApp.controller('logoutController', ['$scope', 'userFactory',
+    function($scope, userFactory) {
+        userFactory.logoutUser().success(function(response) {
+            console.log('logout', response);
+            window.location = baseUrl;
+        });
+    }
+]);
+
+myApp.controller('userController', ['$scope', 'action', 'timeEntry', '$location', 'userFactory', 'snackbar',
+    function($scope, action, timeEntry, $location, userFactory, snackbar) {
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        if (action && action.allEntries != undefined) {
+            window.document.title = 'Request Backdate entry';
+
+            action.allEntries.success(function(response) {
+                if (response.length != 0) {
+                    console.log('all Entries', response.length);
+                    $scope.allEntries = response;
+                    $scope.showEntries = true;
+                }
+            });
+        }
+
+        /*Variables*/
+        angular.extend($scope, {
+            requestBackdate: {},
+            allEntries: {},
+            showEntries: false
+        });
+
+        /*Methods*/
+        angular.extend($scope, {
+            requestBackdateSubmit: function(requestBackdateForm) {
+                if (requestBackdateForm.$valid) {
+                    /*get all the user ids*/
+                    var userIds = [];
+                    if ($scope.requestBackdate != undefined) {
+                        angular.forEach($scope.requestBackdate.users, function(value, key) {
+                            userIds.push(value.id);
+                        });
+                    }
+
+                    /*create the post data*/
+                    var entryData = {
+                        date: $scope.requestBackdate.backdate,
+                        users: userIds,
+                        comment: $scope.requestBackdate.reason
+                    };
+
+                    timeEntry.saveRequestBackDateEntry(entryData).success(function(response) {
+                        console.log('backdate entries', response);
+                        $scope.allEntries = response;
+                        $scope.requestBackdate = {};
+                        $scope.showEntries = true;
+                        snackbar.create("Entry added and mail sent.", 1000);
+                    });
+                }
+            }
+        });
+
+    }
+]);
+
+myApp.factory('userFactory', ['$http', '$cookies',
+    function($http, $cookies) {
+        var userFactory = {};
+
+        userFactory.logoutUser = function() {
+            $cookies.remove('userObj');
+            return $http.get(baseUrl + 'logout');
+        }
+
+        userFactory.getUserList = function() {
+            return $http.get(baseUrl + 'api/get-user-list');
+        }
+
+        userFactory.getUserObj = function() {
+            return $http.get(baseUrl + 'api/get-user_data');
+        }
+
+        userFactory.getUserListByRole = function() {
+            /*Code for loading users by role id*/
+            var role = [1,3];
+            var jsonData=JSON.stringify(role);
+
+            return $http({
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                url: baseUrl + 'api/get-user-list-by-role',
+                method: 'POST',
+                data:  jsonData
+            });
+        }
+
+        return userFactory;
+    }
+]);
 
 //# sourceMappingURL=app.js.map

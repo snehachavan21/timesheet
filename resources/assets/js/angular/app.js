@@ -90,7 +90,14 @@ myApp.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/report', {
             templateUrl: '/templates/manager/reports.html',
             controller: 'reportController',
-            roles: ['Admin', 'Project Manager']
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(clientFactory) {
+                    return {
+                        clients: clientFactory.getClientList()
+                    }
+                }
+            }
         });
 
         $routeProvider.when('/projects', {
