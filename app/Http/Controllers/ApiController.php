@@ -462,8 +462,6 @@ class ApiController extends Controller
 
     public function saveNewTicket(Request $request)
     {
-        \Log::info(print_r($request->all(), 1));
-
         try {
             DB::beginTransaction();
             $ticket = new Ticket;
@@ -504,5 +502,39 @@ class ApiController extends Controller
     {
         $ticket = new Ticket;
         return response(['data' => $ticket->getTicketById($id)], 200);
+    }
+
+    public function updateTicket(Request $request)
+    {
+        // \Log::info(print_r($request->all(), 1));
+
+        $ticket = Ticket::findOrFail($request->input('id'));
+        $ticket->title = $request->input('title');
+        $ticket->description = $request->input('description');
+        $ticket->complete_date = $request->input('complete_date');
+        $ticket->project_id = $request->input('project_id');
+        $ticket->assigned_to = $request->input('assigned_to');
+        $ticket->type = $request->input('type');
+        $ticket->save();
+
+        $followers = $request->input('followers');
+        DB::table('ticket_followers')->where('ticket_id', $request->input('id'))->delete();
+        foreach ($followers as $value) {
+            DB::table('ticket_followers')->insert([
+                'ticket_id' => $ticket->id,
+                'user_id' => $value,
+            ]);
+        }
+
+        return response(['data' => 'Ticket updated'], 200);
+    }
+
+    public function getMyTickets()
+    {
+        $ticket = new Ticket;
+
+        $myTickets = $ticket->getMyTickets();
+
+        return response(['data' => $myTickets], 200);
     }
 }

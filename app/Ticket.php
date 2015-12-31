@@ -6,6 +6,7 @@ use App\Project;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Ticket extends Model
@@ -17,7 +18,7 @@ class Ticket extends Model
      */
     protected $fillable = ['title', 'description', 'project_id', 'assigned_to', 'estimate_id', 'status', 'complete_date', 'type'];
 
-    public function getTickets()
+    protected function getTicketBaseQuery()
     {
         $select = ['t.*', 'u.name as assigned_to', 'p.name as project'];
         $query = DB::table('tickets as t');
@@ -26,7 +27,24 @@ class Ticket extends Model
         $query->join('projects as p', 'p.id', '=', 't.project_id', 'left');
         $query->orderBy('t.id', 'desc');
 
+        return $query;
+    }
+
+    public function getTickets()
+    {
+        $query = $this->getTicketBaseQuery();
+
         $result = $query->get();
+
+        return $result;
+    }
+
+    public function getMyTickets()
+    {
+        $query = $this->getTicketBaseQuery();
+        $query->where('t.assigned_to', Auth::user()->id);
+        $result = $query->get();
+
         return $result;
     }
 
@@ -40,14 +58,14 @@ class Ticket extends Model
 
         $result = $query->first();
 
-        // \Log::info(print_r($result, 1));
-
+        // adding projects, users and other information
         $result->project[0] = Project::find($result->project_id);
+
         $result->users[0] = User::find($result->assigned_to);
+
         $result->completeDate = Carbon::parse($result->complete_date)->toDateString();
 
         $followers = DB::table('ticket_followers')->where('ticket_id', $id)->get();
-        \Log::info(print_r($followers, 1));
 
         foreach ($followers as $follower) {
             $result->followers[] = User::find($follower->user_id);

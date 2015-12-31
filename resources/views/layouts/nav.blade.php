@@ -23,7 +23,8 @@
           <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-clock-o"></i> Time Tracker <span class="caret"></span></a>
           <ul class="dropdown-menu">
             <li><a href="{{ url('time-tracker') }}">My Entries</a></li>
-            <li><a href="{{ url('time-tracker-add') }}">Add Entry</a></li>
+            {{-- <li><a href="{{ url('time-tracker-add') }}">Add Entry</a></li> --}}
+            <li><a href="{{ url('spa/time-tracker-report#/ticket/my-tickets') }}"><i class="fa fa-bug"></i> My tickets</a></li>
             <li><a href="{{ url('spa/time-tracker-report#/user/request-backdate-entry') }}"><i class="fa fa-backward"></i> Request backdate entry</a></li>
             @if (Gate::allows('viewTrackerReport', new \App\TimeEntry))
             <li role="separator" class="divider"></li>

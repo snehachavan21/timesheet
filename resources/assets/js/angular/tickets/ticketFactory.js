@@ -12,6 +12,17 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         });
     }
 
+    ticketFactory.updateTicket = function(ticketData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/update-ticket',
+            method: 'POST',
+            data: ticketData
+        });
+    }
+
     ticketFactory.getAllTickets = function() {
         return $http.get(baseUrl + 'api/get-ticket');
     }
@@ -22,6 +33,10 @@ myApp.factory('ticketFactory', ['$http', function($http) {
 
     ticketFactory.getTickeType = function() {
         return $http.get(baseUrl + 'api/get-ticket-types');
+    }
+
+    ticketFactory.getMyTickets = function() {
+        return $http.get(baseUrl + 'api/get-my-tickets');
     }
 
     return ticketFactory;

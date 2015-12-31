@@ -280,6 +280,18 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/my-tickets', {
+            templateUrl: '/templates/tickets/my-tickets.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory) {
+                    return {
+                        myTickets: ticketFactory.getMyTickets(),
+                    }
+                }
+            }
+        });
+
         $routeProvider.otherwise('/');
     }
 ]);

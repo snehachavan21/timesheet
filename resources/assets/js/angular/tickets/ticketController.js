@@ -1,8 +1,8 @@
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar',
-    function($scope, action, ticketFactory, $location, snackbar) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams) {
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -48,6 +48,15 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*loading user's tickets*/
+        if (action && action.myTickets != undefined) {
+            action.myTickets.success(function(response) {
+                console.log('myTickets', response);
+                $scope.myTickets = response.data;
+                $scope.viewMyTickets = true;
+            });
+        }
+
         /*model*/
         angular.extend($scope, {
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
@@ -58,6 +67,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             projects: {},
             ticketType: {},
             tickets: {},
+            myTickets: {},
+            viewMyTickets: false,
             viewTickets: true
         });
 
@@ -90,7 +101,27 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             },
             updateTicket: function(updateTicketForm) {
                 if (updateTicketForm.$valid) {
-                    console.log($scope.newTicket);
+                    var ticketData = {
+                        title: $scope.newTicket.title,
+                        description: $scope.newTicket.comment,
+                        complete_date: $scope.newTicket.completeDate,
+                        project_id: $scope.newTicket.project[0].id,
+                        assigned_to: $scope.newTicket.users[0].id,
+                        followers: [],
+                        type: $scope.newTicket.type,
+                        id: $routeParams.ticketId
+                    };
+
+                    /*Adding follower ids*/
+                    angular.forEach($scope.newTicket.followers, function(value, key) {
+                        ticketData.followers.push(value.id);
+                    });
+
+                    ticketFactory.updateTicket(ticketData).success(function(response) {
+                        console.log(response);
+                        $location.path('/ticket/list');
+                        snackbar.create("Ticket updated.", 1000);
+                    });
                 }
             }
         });
