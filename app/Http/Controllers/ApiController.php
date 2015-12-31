@@ -156,21 +156,34 @@ class ApiController extends Controller
     public function getFilterReportSearch(Request $request)
     {
         $query = DB::table('time_entries as te');
+
         $query->select(['te.desc as desc', 'te.time as time', 'u.name as username', 'te.project_name as project_name', 'te.client_name as client_name', DB::raw("DATE(te.created_at) as createdDate")]);
 
         $query->join('users as u', 'u.id', '=', 'te.user_id', 'left');
 
+        // check if description is present
         if ($request->input('desc')) {
             $desc = $request->input('desc');
             $query->where('te.desc', 'like', "%{$desc}%");
         }
 
+        // check if user is present and if it's single or multiple users
         if ($request->input('users')) {
             if (count($request->input('users')) == 1) {
                 $query->where('te.user_id', $request->input('users')[0]);
             } else {
                 foreach ($request->input('users') as $userId) {
                     $query->orWhere('te.user_id', $userId);
+                }
+            }
+        }
+
+        if ($request->input('clients')) {
+            if (count($request->input('clients')) == 1) {
+                $query->where('te.client_name', $request->input('clients')[0]);
+            } else {
+                foreach ($request->input('clients') as $clientName) {
+                    $query->orWhere('te.client_name', $clientName);
                 }
             }
         }

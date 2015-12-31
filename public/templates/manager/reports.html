@@ -6,6 +6,8 @@
     </div>
 </div>
 
+<!-- <pre>{{filters | json}}</pre> -->
+
 <form ng-submit="filterTime(filterTimeFrm)" name="filterTimeFrm">
     <div class="row" ng-show="showData">
         <div class="col-sm-3">
@@ -29,12 +31,12 @@
         </div>
 
         <div class="col-sm-3">
-            <label>User</label>
+            <label>Client</label>
             <oi-select
-            oi-options="user.name for user in users track by user.id"
-            ng-model="filters.users"
+            oi-options="client.name for client in clients track by client.name"
+            ng-model="filters.clients"
             multiple
-            placeholder="Select User"
+            placeholder="Select client"
             ></oi-select>
         </div>
     </div>
@@ -58,7 +60,20 @@
             </div>
         </div>
 
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label>User</label>
+                <oi-select
+                oi-options="user.name for user in users track by user.id"
+                ng-model="filters.users"
+                multiple
+                placeholder="Select User"
+                ></oi-select>
+            </div>
+        </div>
+
         <div class="col-sm-4">
+            <br><br>
             <button class="btn btn-success">Filter</button>
             <button class="btn btn-warning" ng-click="clearFilters()">Clear</button>
         </div>
