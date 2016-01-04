@@ -107,3 +107,15 @@ Route::resource('clients', 'ClientController');
 Route::resource('role', 'RoleController');
 
 App::bind('App\Services\Interfaces\SendMailInterface', 'App\Services\SESSendMail');
+
+/* Routes for desktop and mobile apps */
+Route::group(['prefix' => 'rest'], function () {
+    post('get-timeentries-by-uid', 'RestController@getTimeEntryByUid');
+    post('auth', 'RestController@checkAuth');
+    get('projects', 'RestController@getProjectList');
+    get('tags', 'RestController@getTags');
+    post('timesheet/save', 'RestController@save');
+    post('timesheet/delete', 'RestController@deleteTimeEntry');
+    post('timesheet/sync-timesheets', 'RestController@syncTimesheets');
+
+});
