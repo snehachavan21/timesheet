@@ -100,3 +100,13 @@ Route::resource('clients', 'ClientController');
 Route::resource('role', 'RoleController');
 
 App::bind('App\Services\Interfaces\SendMailInterface', 'App\Services\SESSendMail');
+
+
+Route::get('get-timeentries-by-uid', 'ToggleController@getTimeEntryByUid');
+Route::post('auth','ToggleController@checkAuth');
+Route::get('projects', 'ToggleController@getProjectList');
+Route::get('tags', 'ToggleController@getTags');
+Route::post('timesheet/save', 'ToggleController@save');
+Route::post('timesheet/delete', 'ToggleController@deleteTimeEntry');
+Route::post('timesheet/sync-timesheets', 'ToggleController@syncTimesheets');
+
