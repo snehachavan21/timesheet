@@ -15,17 +15,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ToggleController extends Controller {
+class RestController extends Controller {
 
-    public function getTimeEntryByUid() {
-//        $uid = $request->input('uid');
+    /**
+     * Get the list of timeEntries of the user
+     *
+     * @return mixed
+     */
+    public function getTimeEntryByUid(Request $request) {
+        $uid = $request->input('uid');
         $query = DB::table('time_entries as te')
             ->select(["te.*",'projects.name as project', DB::raw("GROUP_CONCAT(tags.id) AS tags, te.user_id as uid"), DB::raw("UNIX_TIMESTAMP(te.created_at)*1000 as start_time"), 'te.time AS total_time', 'es.estimate_id as estimate_id'])
             ->join('projects', 'projects.id', '=', 'te.project_id')
             ->join('taggables as tgb', 'tgb.taggable_id', '=', 'te.id')
             ->leftJoin('tags as tags', 'tags.id', '=', 'tgb.tag_id')
             ->leftJoin('time_entry_estimates as es', 'es.time_entry_id', '=', 'te.id')
-            ->where('te.user_id', '=', 1)
+//            ->where('te.user_id', '=', 1)
+            ->where('te.user_id', '=', $uid)
+            ->where('te.created_at', '>=', DB::raw("NOW( ) - INTERVAL 1
+MONTH"))
             ->groupBy('te.id')
             ->orderBy('te.created_at', 'desc')
             ->get();
@@ -64,98 +72,35 @@ class ToggleController extends Controller {
         return response(['data' => Auth::user()], 201);
     }
 
+    /**
+     * Get the list of Tags
+     *
+     * @return mixed
+     */
     public function getTags() {
         $tags = Tag::all();
         return response($tags->toArray(), 201);
     }
 
+    /**
+     * Save timeEntry
+     *
+     * @return mixed
+     */
     public function save(Request $request) {
         return  $this->saveTimesheet($request->all());
 
     }
 
-   /* public function saveTimesheet($postdata) {
-        try {
-            $output = array();
-
-            DB::beginTransaction();
-            $project = Project::with('client')->find($postdata['project_id']);
-
-            // if the user id is set, it means it's a backdate entry
-            $createdAt = Carbon::now();
-            $updatedAt = Carbon::now();
-            $userId = 0;
-            if ($postdata['uid']) {
-                $userId = $postdata['uid'];
-                $timestamp = $postdata['start_time']/1000;
-                $createdAt = Carbon::createFromTimestamp($timestamp)->toDateTimeString();
-                $updatedAt =  Carbon::createFromTimestamp($timestamp)->toDateTimeString();
-            }
-
-            $entryId = DB::table('time_entries')->insertGetId([
-                'desc' => $postdata['desc'],
-                'user_id' => $userId,
-                'project_id' => $project->id,
-                'project_name' => $project->name,
-                'client_name' => $project->client->name,
-                'time' => $postdata['total_time'],
-                'created_at' => $createdAt,
-                'updated_at' => $updatedAt,
-            ]);
-
-            $tagsArr = explode(',',$postdata['tags']);
-            // adding the entry of the ticket with tags mapping table
-            foreach ($tagsArr as $key => $value) {
-                    DB::table('taggables')->insert([
-                        'tag_id' => $value,
-                        'taggable_id' => $entryId,
-                        'taggable_type' => 'ticket',
-                        'created_at' => $createdAt,
-                        'updated_at' => $updatedAt,
-                    ]);
-            }
-
-
-            $output= array(
-                'id' => $entryId,
-                'uid' => $userId,
-                'desc' => $postdata['desc'],
-                'project_id' => $postdata['project_id'],
-                'project' => $project->name,
-                'total_time' => $postdata['total_time'],
-                'start_time' =>$postdata['start_time'],
-                'end_time' => $postdata['end_time'],
-                'tags' => $postdata['tags'],
-                'client_name' => $project->client->name,
-            );
-
-            if (isset($postdata['estimate_id']) && $postdata['estimate_id'] != 0) {
-                DB::table('time_entry_estimates')->insert([
-                    'time_entry_id' => $entryId,
-                    'estimate_id' => $postdata['estimate_id'],
-                    'created_at' => $createdAt,
-                    'updated_at' => $updatedAt,
-                ]);
-
-                DB::update("UPDATE estimates SET hours_consumed = hours_consumed + :hours WHERE id = :id", [
-                    'hours' => $postdata['total_time'],
-                    'id' => $postdata['estimate_id'],
-                ]);
-            }
-
-            DB::commit();
-            return response($output, 201);
-        } catch (\PDOException $e) {
-            DB::rollBack();
-            abort(403, 'Data was not saved. Try again' . $e->getMessage());
-        }
-
-    }*/
-
+    /**
+     * Helper function to Save timeEntry
+     *
+     * @return mixed
+     */
     public function saveTimesheet($postdata) {
         try {
             $output = array();
-            \Log::info(print_r($postdata, true));
+//            \Log::info(print_r($postdata, true));
             DB::beginTransaction();
             $project = Project::with('client')->find($postdata['project_id']);
 
@@ -232,6 +177,9 @@ class ToggleController extends Controller {
 
     }
 
+    /**
+     * Delete timeEntry
+     */
     public function deleteTimeEntry(Request $request) {
         $trackerId = $request->input('id');
 
@@ -258,6 +206,9 @@ class ToggleController extends Controller {
             ->delete();
     }
 
+    /**
+     * Sync offline entries to online
+     */
     public function syncTimesheets(Request $request) {
         $post_data = $request->input();
         foreach($post_data as $tData) {
@@ -278,6 +229,7 @@ class ToggleController extends Controller {
                 }
             }
         }
-        return $this->getTimeEntryByUid();
+//        return $this->getTimeEntryByUid();
+        return response("Timesheet synced successfully", 201);
     }
 }
