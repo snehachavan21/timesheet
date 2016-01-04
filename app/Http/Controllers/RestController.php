@@ -24,7 +24,14 @@ class RestController extends Controller {
      */
     public function getTimeEntryByUid(Request $request) {
         $uid = $request->input('uid');
-        $query = DB::table('time_entries as te')
+        $output = $this->getUserTimeEntries($uid);
+
+        return response($output, 201);
+
+    }
+
+    public function getUserTimeEntries($uid) {
+        return DB::table('time_entries as te')
             ->select(["te.*",'projects.name as project', DB::raw("GROUP_CONCAT(tags.id) AS tags, te.user_id as uid"), DB::raw("UNIX_TIMESTAMP(te.created_at)*1000 as start_time"), 'te.time AS total_time', 'es.estimate_id as estimate_id'])
             ->join('projects', 'projects.id', '=', 'te.project_id')
             ->join('taggables as tgb', 'tgb.taggable_id', '=', 'te.id')
@@ -37,9 +44,6 @@ MONTH"))
             ->groupBy('te.id')
             ->orderBy('te.created_at', 'desc')
             ->get();
-
-        return response($query, 201);
-
     }
 
     /**
@@ -211,6 +215,7 @@ MONTH"))
      */
     public function syncTimesheets(Request $request) {
         $post_data = $request->input();
+//        \Log::info(print_r($post_data, true));
         foreach($post_data as $tData) {
             $uid =  $tData['uid'];
             if(!$tData['status']) {
@@ -229,7 +234,10 @@ MONTH"))
                 }
             }
         }
-//        return $this->getTimeEntryByUid();
-        return response("Timesheet synced successfully", 201);
+//        \Log::info(print_r($this->getUserTimeEntries($uid), true));
+
+        $output = $this->getUserTimeEntries($uid);
+
+        return response($output, 201);
     }
 }
