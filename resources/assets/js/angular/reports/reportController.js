@@ -1,5 +1,13 @@
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory) {
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action) {
+
+        /*check if clients are loaded*/
+        if (action && action.clients != undefined) {
+            action.clients.success(function(response) {
+                console.log('all clients', response);
+                $scope.clients = response;
+            });
+        }
 
         timeEntry.getEntries().then(function(response) {
                 console.log('time entries', response.data);
@@ -36,6 +44,7 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             filters: {},
             users: [],
             projects: [],
+            clients: {},
             dt: new Date()
         });
 
@@ -55,6 +64,13 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                     });
                 }
 
+                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
+                    queryParams.clients = [];
+                    angular.forEach($scope.filters.clients, function(value, key) {
+                        queryParams.clients.push(value.name);
+                    });
+                }
+
                 if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
                     queryParams.projects = [];
                     angular.forEach($scope.filters.project, function(value, key) {
@@ -70,8 +86,6 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                     queryParams.endDate = $scope.filters.endDate;
                     var startDateOfYear = moment(queryParams.startDate).dayOfYear();
                     var endDateOfYear = moment(queryParams.endDate).dayOfYear();
-
-                    console.log(startDateOfYear, endDateOfYear);
 
                     if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
                         alert('End date is before start date.');

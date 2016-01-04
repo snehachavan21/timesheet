@@ -110,7 +110,7 @@ class TrackerController extends Controller
                 DB::table('taggables')->insert([
                     'tag_id' => $value,
                     'taggable_id' => $entryId,
-                    'taggable_type' => 'ticket',
+                    'taggable_type' => 'timeentry',
                     'created_at' => $createdAt,
                     'updated_at' => $updatedAt,
                 ]);
@@ -164,7 +164,7 @@ class TrackerController extends Controller
 
         DB::table('taggables')
             ->where('taggable_id', $entry->id)
-            ->where('taggable_type', 'ticket')
+            ->where('taggable_type', 'timeentry')
             ->delete();
     }
 
