@@ -92,7 +92,7 @@ MONTH"))
      * @return mixed
      */
     public function save(Request $request) {
-        return  $this->saveTimesheet($request->all());
+       return  $this->saveTimesheet($request->all());
 
     }
 
@@ -215,22 +215,24 @@ MONTH"))
      */
     public function syncTimesheets(Request $request) {
         $post_data = $request->input();
+
 //        \Log::info(print_r($post_data, true));
         foreach($post_data as $tData) {
             $uid =  $tData['uid'];
             if(!$tData['status']) {
                 $already_saved = 0;
                 if(isset($tData['id'])) {
-                    $already_saved = Timesheet::where('id', '=', $tData['id'])->count();
+                    $already_saved = TimeEntry::where('id', '=', $tData['id'])->count();
                     if($already_saved && $tData['deleted']) {
-                        Timesheet::where('id' , '=', $tData['id'])->delete();
+                        TimeEntry::where('id' , '=', $tData['id'])->delete();
                     }
                 }
 
                 if($already_saved) {
 
                 }else {
-                    $timesheet = $this->saveTimesheet($tData);
+                    if(!$tData['deleted'])
+                        $timesheet = $this->saveTimesheet($tData);
                 }
             }
         }
