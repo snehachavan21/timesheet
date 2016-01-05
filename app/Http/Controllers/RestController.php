@@ -7,6 +7,7 @@
  */
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Auth\OAuthController;
 use App\Project;
 use App\Tag;
 use App\TimeEntry;
@@ -15,7 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class RestController extends Controller {
+class RestController extends OAuthController {
 
     /**
      * Get the list of timeEntries of the user
@@ -59,8 +60,10 @@ MONTH"))
     /**
      * Do user login by checking the username and password
      *
+     * @param  Illuminate\Http\Request $request
+     * @return Illuminate\Http\Response
      */
-    public function checkAuth(Request $request)
+    public function login(Request $request)
     {
         // setting the credentials array
         $credentials = [
@@ -71,9 +74,52 @@ MONTH"))
         // if the credentials are wrong
         if (!Auth::attempt($credentials)) {
             return response(['message' => 'Username password does not match'], 403);
+        } else {
+            //get access token first if device exist then it will return access token data
+            if ($userAccessData = $this->generateAccessToken($request)) {
+                return response(['data' => $userAccessData, 'message' => 'success', 'flag' => true], 201);
+            } else {
+                return response(['data' => [], 'message' => 'Error generating access token', 'flag' => false], 201);
+            }
         }
+    }
 
-        return response(['data' => Auth::user()], 201);
+
+    /**
+     * Common function to generate access token used when registering user
+     * @param $request
+     * @return array|bool
+     */
+    private function generateAccessToken($request)
+    {
+        //generate access token after registration
+        $userAccessToken = $this->getOAuthToken($request);
+        if ($userAccessToken) {
+            $userData = json_decode($userAccessToken->getContent());
+
+            if (isset($userData->error) || get_object_vars($userData) == false) {
+                $errDescription = "Login failed. Please try again later";
+
+                if (isset($userData->error_description)) {
+                    $errDescription = $userData->error_description;
+                }
+
+                return [
+                    'message' => $errDescription,
+                    'status' => 201,
+                ];
+            } else {
+                return [
+                    'access_token' => $userData->access_token->access_token,
+                    'refresh_token' => $userData->access_token->refresh_token,
+                    'expires_in' => $userData->access_token->expires_in,
+                    'id' => $userData->user->id,
+                    'name' => $userData->user->name,
+                    'email' => $userData->user->email,
+                ];
+            }
+        }
+        return false;
     }
 
     /**

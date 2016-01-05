@@ -114,7 +114,7 @@ App::bind('App\Services\Interfaces\SendMailInterface', 'App\Services\SESSendMail
 /* Routes for desktop and mobile apps */
 Route::group(['prefix' => 'rest'], function () {
     post('get-timeentries-by-uid', 'RestController@getTimeEntryByUid');
-    post('auth', 'RestController@checkAuth');
+    post('auth', 'RestController@login');
     get('projects', 'RestController@getProjectList');
     get('tags', 'RestController@getTags');
     post('timesheet/save', 'RestController@save');
@@ -122,3 +122,29 @@ Route::group(['prefix' => 'rest'], function () {
     post('timesheet/sync-timesheets', 'RestController@syncTimesheets');
 
 });
+
+/************************************  OAUTH  ***********************************************/
+
+/* Routes for oauth */
+post('oauth/token', 'Auth\OAuthController@getOAuthToken');
+
+//oauth singleton object
+App::singleton('oauth2', function () {
+    $storage = new OAuth2\Storage\Pdo(array(
+        'dsn' => 'mysql:dbname=' . env('DB_DATABASE') . ';host=' . env('DB_HOST'),
+        'username' => env('DB_USERNAME'),
+        'password' => env('DB_PASSWORD')));
+
+    $server = new OAuth2\Server($storage, array('access_lifetime' => env('ACCESS_TOKEN_LIFETIME')));
+    $server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
+    $server->addGrantType(new App\Http\Controllers\Auth\DesktopAppGrantType($storage));
+    $server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, ['always_issue_new_refresh_token' => true]));
+
+    return $server;
+});
+
+
+Route::group(['middleware'=>'oauth', 'prefix' => 'rest'], function(){
+
+});
+

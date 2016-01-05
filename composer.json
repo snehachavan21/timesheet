@@ -10,7 +10,9 @@
         "laravelcollective/html": "5.1.*",
         "maatwebsite/excel": "^2.0",
         "league/flysystem-aws-s3-v3": "^1.0",
-        "phpmailer/phpmailer": "^5.2"
+        "phpmailer/phpmailer": "^5.2",
+        "bshaffer/oauth2-server-php": "^1.8",
+        "bshaffer/oauth2-server-httpfoundation-bridge": "^1.1"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
