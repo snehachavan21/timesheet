@@ -15,4 +15,15 @@ class TicketController extends Controller
             'duplicate' => 'Duplicate',
         ];
     }
+
+    public function getTicketStatus()
+    {
+        return [
+            'Assigned' => 'Assigned',
+            'In progress' => 'In progress',
+            'Won\'t Fix' => 'Won\'t Fix',
+            'Ready for testing' => 'Ready for testing',
+            'Done' => 'Done',
+        ];
+    }
 }

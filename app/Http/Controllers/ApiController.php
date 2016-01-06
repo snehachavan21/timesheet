@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Client;
 use App\Comment;
 use App\Estimate;
+use App\Jobs\TicketCreatedNotification;
 use App\Project;
 use App\Services\Interfaces\SendMailInterface;
 use App\Ticket;
@@ -199,13 +200,13 @@ class ApiController extends Controller
         }
 
         if ($request->input('startDate')) {
-            $startDate = Carbon::parse($request->input('startDate'));
+            $startDate = Carbon::createFromFormat('Y, M j', $request->input('startDate'));
             $string = $startDate->year . '-' . $startDate->month . '-' . $startDate->day . ' 00:00:00';
             $query->where('te.created_at', '>=', $string);
         }
 
         if ($request->input('endDate')) {
-            $endDate = Carbon::parse($request->input('endDate'));
+            $endDate = Carbon::createFromFormat('Y, M j', $request->input('endDate'));
             $stringEndDate = $endDate->year . '-' . $endDate->month . '-' . ($endDate->day + 1) . ' 00:00:00';
             $query->where('te.created_at', '<=', $stringEndDate);
         }
@@ -496,6 +497,9 @@ class ApiController extends Controller
                     'user_id' => $value,
                 ]);
             }
+
+            $this->dispatch(new TicketCreatedNotification($ticket));
+
             DB::commit();
         } catch (\PDOException $e) {
             DB::rollBack();
@@ -528,6 +532,7 @@ class ApiController extends Controller
         $ticket->project_id = $request->input('project_id');
         $ticket->assigned_to = $request->input('assigned_to');
         $ticket->type = $request->input('type');
+        $ticket->status = $request->input('status');
         $ticket->save();
 
         $followers = $request->input('followers');

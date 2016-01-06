@@ -1,21 +1,11 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Application Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It's a breeze. Simply tell Laravel the URIs it should respond to
-| and give it the controller to call when that URI is requested.
-|
- */
+Route::get('/', 'UserController@index');
+
 Route::group(['middleware' => 'csrf'], function () {
-
-    Route::get('/', 'UserController@index');
-
     // route to process the form
     Route::post('login', array('uses' => 'UserController@doLogin'));
+
     post('logout', 'UserController@doLogout');
 
     Route::get('logout', array('uses' => 'UserController@doLogout'));
@@ -142,9 +132,3 @@ App::singleton('oauth2', function () {
 
     return $server;
 });
-
-
-Route::group(['middleware'=>'oauth', 'prefix' => 'rest'], function(){
-
-});
-

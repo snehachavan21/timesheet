@@ -14,7 +14,7 @@ return [
     | Supported: "null", "sync", "database", "beanstalkd",
     |            "sqs", "iron", "redis"
     |
-    */
+     */
 
     'default' => env('QUEUE_DRIVER', 'sync'),
 
@@ -27,7 +27,7 @@ return [
     | is used by your application. A default configuration has been added
     | for each back-end shipped with Laravel. You are free to add more.
     |
-    */
+     */
 
     'connections' => [
 
@@ -44,32 +44,32 @@ return [
 
         'beanstalkd' => [
             'driver' => 'beanstalkd',
-            'host'   => 'localhost',
-            'queue'  => 'default',
-            'ttr'    => 60,
+            'host' => 'localhost',
+            'queue' => 'default',
+            'ttr' => 60,
         ],
 
         'sqs' => [
             'driver' => 'sqs',
-            'key'    => 'your-public-key',
-            'secret' => 'your-secret-key',
-            'queue'  => 'your-queue-url',
-            'region' => 'us-east-1',
+            'key' => env('SQS_KEY'),
+            'secret' => env('SQS_SECRET'),
+            'queue' => env('SQS_QUEUE_URL'),
+            'region' => env('SQS_REGION'),
         ],
 
         'iron' => [
-            'driver'  => 'iron',
-            'host'    => 'mq-aws-us-east-1.iron.io',
-            'token'   => 'your-token',
+            'driver' => 'iron',
+            'host' => 'mq-aws-us-east-1.iron.io',
+            'token' => 'your-token',
             'project' => 'your-project-id',
-            'queue'   => 'your-queue-name',
+            'queue' => 'your-queue-name',
             'encrypt' => true,
         ],
 
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
-            'queue'  => 'default',
+            'queue' => 'default',
             'expire' => 60,
         ],
 
@@ -84,7 +84,7 @@ return [
     | can control which database and table are used to store the jobs that
     | have failed. You may change them to any database / table you wish.
     |
-    */
+     */
 
     'failed' => [
         'database' => 'mysql', 'table' => 'failed_jobs',

@@ -25,18 +25,18 @@ myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
                 if (next.$$route.roles !== undefined) {
                     var access = false;
                     var userObj = $cookies.getObject('userObj');
-                    console.log('userObj', userObj);
+                    /*console.log('userObj', userObj);*/
                     angular.forEach(next.$$route.roles, function(roleValue, roleKey) {
-                        console.log(roleValue);
+                        /*console.log(roleValue);*/
                         angular.forEach(userObj.roles, function(userValue, userKey) {
-                            console.log(userValue);
+                            /*console.log(userValue);*/
                             if (roleValue == userValue.roleName) {
                                 access = true;
                             }
                         });
                     });
 
-                    console.log(access);
+                    /*console.log(access);*/
                     if (access == false) {
                         $location.path('access-denied');
                     }
@@ -47,6 +47,12 @@ myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
 
 myApp.filter('unsafe', function($sce) {
     return $sce.trustAsHtml;
+});
+
+myApp.filter('ucfirst', function() {
+    return function(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 });
 
 myApp.controller('globalController', ['$scope', '$location',
@@ -241,7 +247,7 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
-        /*Ticket section*/
+        /*Ticket section starts*/
         $routeProvider.when('/ticket/list', {
             templateUrl: '/templates/tickets/list-ticket.html',
             controller: 'ticketController',
@@ -252,7 +258,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         tickets: ticketFactory.getAllTickets(),
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -267,7 +274,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -282,6 +290,7 @@ myApp.config(['$routeProvider', '$locationProvider',
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus(),
                         ticket: ticketFactory.getTicketById($route.current.params.ticketId)
                     }
                 }
