@@ -79,6 +79,7 @@ Route::group(['middleware' => 'csrf'], function () {
             post('allow-request-backdate-entry', 'ApiController@allowRequestBackdateEntry');
             post('save-new-ticket', 'ApiController@saveNewTicket');
             get('get-ticket-types', 'TicketController@getTicketTypes');
+            get('get-ticket-status', 'TicketController@getTicketStatus');
             get('get-ticket', 'ApiController@getAllTickets');
             get('get-ticket-by-id/{id}', 'ApiController@getTicketById');
             post('update-ticket', 'ApiController@updateTicket');
