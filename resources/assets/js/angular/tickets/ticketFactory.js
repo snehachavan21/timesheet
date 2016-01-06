@@ -35,6 +35,10 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-ticket-types');
     }
 
+    ticketFactory.getTickeStatus = function() {
+        return $http.get(baseUrl + 'api/get-ticket-status');
+    }
+
     ticketFactory.getMyTickets = function() {
         return $http.get(baseUrl + 'api/get-my-tickets');
     }

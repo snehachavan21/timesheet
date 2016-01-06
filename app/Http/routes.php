@@ -1,19 +1,12 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Application Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It's a breeze. Simply tell Laravel the URIs it should respond to
-| and give it the controller to call when that URI is requested.
-|
- */
+get('temp', 'SpaController@test');
+
 Route::get('/', 'UserController@index');
 
 // route to process the form
 Route::post('login', array('uses' => 'UserController@doLogin'));
+
 post('logout', 'UserController@doLogout');
 
 Route::get('logout', array('uses' => 'UserController@doLogout'));
@@ -87,6 +80,7 @@ Route::group(['middleware' => 'auth'], function () {
         post('allow-request-backdate-entry', 'ApiController@allowRequestBackdateEntry');
         post('save-new-ticket', 'ApiController@saveNewTicket');
         get('get-ticket-types', 'TicketController@getTicketTypes');
+        get('get-ticket-status', 'TicketController@getTicketStatus');
         get('get-ticket', 'ApiController@getAllTickets');
         get('get-ticket-by-id/{id}', 'ApiController@getTicketById');
         post('update-ticket', 'ApiController@updateTicket');

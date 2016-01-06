@@ -29,6 +29,14 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*load ticket status*/
+        if (action && action.status != undefined) {
+            action.status.success(function(response) {
+                console.log('all status', response);
+                $scope.ticketStatus = response;
+            });
+        }
+
         /*load tickets*/
         if (action && action.tickets != undefined) {
             action.tickets.success(function(response) {
@@ -62,10 +70,12 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
             showTicketForm: false,
             newTicket: {
-                type: 'none'
+                type: 'none',
+                status: 'none'
             },
             projects: {},
             ticketType: {},
+            ticketStatus: {},
             tickets: {},
             myTickets: {},
             viewMyTickets: false,
@@ -84,7 +94,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         project_id: $scope.newTicket.project[0].id,
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
-                        type: $scope.newTicket.type
+                        type: $scope.newTicket.type,
+                        status: $scope.newTicket.status
                     };
 
                     /*Adding follower ids*/
@@ -109,6 +120,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
                         type: $scope.newTicket.type,
+                        status: $scope.newTicket.status,
                         id: $routeParams.ticketId
                     };
 

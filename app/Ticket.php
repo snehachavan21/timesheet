@@ -50,7 +50,7 @@ class Ticket extends Model
 
     public function getTicketById($id)
     {
-        $select = ['t.description as comment', 't.title', 't.type', 't.project_id', 't.assigned_to', 't.complete_date'];
+        $select = ['t.description as comment', 't.title', 't.type', 't.project_id', 't.assigned_to', 't.complete_date', 't.id', 't.created_at', 't.created_by', 't.status'];
         $query = DB::table('tickets as t');
         $query->select($select);
         $query->where('t.id', $id);
@@ -64,6 +64,8 @@ class Ticket extends Model
         $result->users[0] = User::find($result->assigned_to);
 
         $result->completeDate = Carbon::parse($result->complete_date)->toDateString();
+
+        $result->created_by = User::find($result->created_by);
 
         $followers = DB::table('ticket_followers')->where('ticket_id', $id)->get();
 

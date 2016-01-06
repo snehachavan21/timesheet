@@ -25,18 +25,18 @@ myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
                 if (next.$$route.roles !== undefined) {
                     var access = false;
                     var userObj = $cookies.getObject('userObj');
-                    console.log('userObj', userObj);
+                    /*console.log('userObj', userObj);*/
                     angular.forEach(next.$$route.roles, function(roleValue, roleKey) {
-                        console.log(roleValue);
+                        /*console.log(roleValue);*/
                         angular.forEach(userObj.roles, function(userValue, userKey) {
-                            console.log(userValue);
+                            /*console.log(userValue);*/
                             if (roleValue == userValue.roleName) {
                                 access = true;
                             }
                         });
                     });
 
-                    console.log(access);
+                    /*console.log(access);*/
                     if (access == false) {
                         $location.path('access-denied');
                     }
@@ -47,6 +47,12 @@ myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
 
 myApp.filter('unsafe', function($sce) {
     return $sce.trustAsHtml;
+});
+
+myApp.filter('ucfirst', function() {
+    return function(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 });
 
 myApp.controller('globalController', ['$scope', '$location',
@@ -241,7 +247,7 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
-        /*Ticket section*/
+        /*Ticket section starts*/
         $routeProvider.when('/ticket/list', {
             templateUrl: '/templates/tickets/list-ticket.html',
             controller: 'ticketController',
@@ -252,7 +258,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         tickets: ticketFactory.getAllTickets(),
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -267,7 +274,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -282,6 +290,7 @@ myApp.config(['$routeProvider', '$locationProvider',
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus(),
                         ticket: ticketFactory.getTicketById($route.current.params.ticketId)
                     }
                 }
@@ -301,6 +310,68 @@ myApp.config(['$routeProvider', '$locationProvider',
         });
 
         $routeProvider.otherwise('/');
+    }
+]);
+
+myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
+    function($scope, action, timeEntry, snackbar) {
+
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        if (action && action.allEntries != undefined) {
+            window.document.title = 'Backdate entry';
+
+            action.allEntries.success(function(response) {
+                if (response.length != 0) {
+                    console.log('all Entries', response.length);
+                    $scope.allEntries = response;
+                    $scope.showEntries = true;
+                }
+            });
+        }
+
+        /*Variables*/
+        angular.extend($scope, {
+            backdateEntry: {},
+            allEntries: {},
+            showEntries: false
+        });
+
+        /*Methods*/
+        angular.extend($scope, {
+            backdateEntrySubmit: function(backdateEntryForm) {
+                if (backdateEntryForm.$valid) {
+                    /*get all the user ids*/
+                    var userIds = [];
+                    if ($scope.backdateEntry != undefined) {
+                        angular.forEach($scope.backdateEntry.users, function(value, key) {
+                            userIds.push(value.id);
+                        });
+                    }
+
+                    /*create the post data*/
+                    var entryData = {
+                        date: $scope.backdateEntry.backdate,
+                        users: userIds,
+                        comment: $scope.backdateEntry.reason
+                    };
+
+                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
+                        console.log('backdate entries', response);
+                        $scope.allEntries = response;
+                        $scope.backdateEntry = {};
+                        $scope.showEntries = true;
+                        snackbar.create("Entry added and mail sent.", 1000);
+                    });
+                }
+            }
+        });
     }
 ]);
 
@@ -716,6 +787,197 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
     }
 ]);
 
+/**
+ * Created by amitav on 12/29/15.
+ */
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams) {
+
+        /*check if projects are loaded*/
+        if (action && action.projects != undefined) {
+            action.projects.success(function(response) {
+                console.log('all projects', response);
+                $scope.projects = response;
+                $scope.showTicketForm = true;
+            });
+        }
+
+        /*check if users are loaded*/
+        if (action && action.users != undefined) {
+            action.users.success(function(response) {
+                console.log('all users', response);
+                $scope.users = response;
+            });
+        }
+
+        /*load ticket type*/
+        if (action && action.type != undefined) {
+            action.type.success(function(response) {
+                console.log('all type', response);
+                $scope.ticketType = response;
+            });
+        }
+
+        /*load ticket status*/
+        if (action && action.status != undefined) {
+            action.status.success(function(response) {
+                console.log('all status', response);
+                $scope.ticketStatus = response;
+            });
+        }
+
+        /*load tickets*/
+        if (action && action.tickets != undefined) {
+            action.tickets.success(function(response) {
+                console.log('all tickets', response);
+                $scope.tickets = response;
+                $scope.viewTickets = true;
+            });
+        }
+
+        /*loading single ticket*/
+        if (action && action.ticket != undefined) {
+            $scope.showTicketForm = false;
+            action.ticket.success(function(response) {
+                console.log('thisTicket', response);
+                $scope.newTicket = response.data;
+                $scope.showTicketForm = true;
+            });
+        }
+
+        /*loading user's tickets*/
+        if (action && action.myTickets != undefined) {
+            action.myTickets.success(function(response) {
+                console.log('myTickets', response);
+                $scope.myTickets = response.data;
+                $scope.viewMyTickets = true;
+            });
+        }
+
+        /*model*/
+        angular.extend($scope, {
+            formUrl: baseUrl + 'templates/tickets/ticket-form.html',
+            showTicketForm: false,
+            newTicket: {
+                type: 'none',
+                status: 'none'
+            },
+            projects: {},
+            ticketType: {},
+            ticketStatus: {},
+            tickets: {},
+            myTickets: {},
+            viewMyTickets: false,
+            viewTickets: true
+        });
+
+        /*methods*/
+        angular.extend($scope, {
+            saveNewTicket: function(addTicketForm) {
+                if (addTicketForm.$valid) {
+                    // console.log($scope.newTicket);
+                    var ticketData = {
+                        title: $scope.newTicket.title,
+                        description: $scope.newTicket.comment,
+                        complete_date: $scope.newTicket.completeDate,
+                        project_id: $scope.newTicket.project[0].id,
+                        assigned_to: $scope.newTicket.users[0].id,
+                        followers: [],
+                        type: $scope.newTicket.type,
+                        status: $scope.newTicket.status
+                    };
+
+                    /*Adding follower ids*/
+                    angular.forEach($scope.newTicket.followers, function(value, key) {
+                        ticketData.followers.push(value.id);
+                    });
+
+                    ticketFactory.saveTicket(ticketData).success(function(response) {
+                        console.log(response);
+                        $location.path('/ticket/list');
+                        snackbar.create("New ticket added.", 1000);
+                    });
+                }
+            },
+            updateTicket: function(updateTicketForm) {
+                if (updateTicketForm.$valid) {
+                    var ticketData = {
+                        title: $scope.newTicket.title,
+                        description: $scope.newTicket.comment,
+                        complete_date: $scope.newTicket.completeDate,
+                        project_id: $scope.newTicket.project[0].id,
+                        assigned_to: $scope.newTicket.users[0].id,
+                        followers: [],
+                        type: $scope.newTicket.type,
+                        status: $scope.newTicket.status,
+                        id: $routeParams.ticketId
+                    };
+
+                    /*Adding follower ids*/
+                    angular.forEach($scope.newTicket.followers, function(value, key) {
+                        ticketData.followers.push(value.id);
+                    });
+
+                    ticketFactory.updateTicket(ticketData).success(function(response) {
+                        console.log(response);
+                        $location.path('/ticket/list');
+                        snackbar.create("Ticket updated.", 1000);
+                    });
+                }
+            }
+        });
+
+    }
+]);
+
+myApp.factory('ticketFactory', ['$http', function($http) {
+    var ticketFactory = {};
+
+    ticketFactory.saveTicket = function(ticketData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-new-ticket',
+            method: 'POST',
+            data: ticketData
+        });
+    }
+
+    ticketFactory.updateTicket = function(ticketData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/update-ticket',
+            method: 'POST',
+            data: ticketData
+        });
+    }
+
+    ticketFactory.getAllTickets = function() {
+        return $http.get(baseUrl + 'api/get-ticket');
+    }
+
+    ticketFactory.getTicketById = function(id) {
+        return $http.get(baseUrl + 'api/get-ticket-by-id/' + id);
+    }
+
+    ticketFactory.getTickeType = function() {
+        return $http.get(baseUrl + 'api/get-ticket-types');
+    }
+
+    ticketFactory.getTickeStatus = function() {
+        return $http.get(baseUrl + 'api/get-ticket-status');
+    }
+
+    ticketFactory.getMyTickets = function() {
+        return $http.get(baseUrl + 'api/get-my-tickets');
+    }
+
+    return ticketFactory;
+}])
+
 myApp.factory('timeEntry', ['$http', function($http) {
     var timeEntry = {};
 
@@ -782,243 +1044,6 @@ myApp.factory('timeEntry', ['$http', function($http) {
 
     return timeEntry;
 }]);
-
-myApp.controller('adminController', ['$scope', 'action', 'timeEntry', 'snackbar',
-    function($scope, action, timeEntry, snackbar) {
-
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        if (action && action.allEntries != undefined) {
-            window.document.title = 'Backdate entry';
-
-            action.allEntries.success(function(response) {
-                if (response.length != 0) {
-                    console.log('all Entries', response.length);
-                    $scope.allEntries = response;
-                    $scope.showEntries = true;
-                }
-            });
-        }
-
-        /*Variables*/
-        angular.extend($scope, {
-            backdateEntry: {},
-            allEntries: {},
-            showEntries: false
-        });
-
-        /*Methods*/
-        angular.extend($scope, {
-            backdateEntrySubmit: function(backdateEntryForm) {
-                if (backdateEntryForm.$valid) {
-                    /*get all the user ids*/
-                    var userIds = [];
-                    if ($scope.backdateEntry != undefined) {
-                        angular.forEach($scope.backdateEntry.users, function(value, key) {
-                            userIds.push(value.id);
-                        });
-                    }
-
-                    /*create the post data*/
-                    var entryData = {
-                        date: $scope.backdateEntry.backdate,
-                        users: userIds,
-                        comment: $scope.backdateEntry.reason
-                    };
-
-                    timeEntry.saveBackDateEntry(entryData).success(function(response) {
-                        console.log('backdate entries', response);
-                        $scope.allEntries = response;
-                        $scope.backdateEntry = {};
-                        $scope.showEntries = true;
-                        snackbar.create("Entry added and mail sent.", 1000);
-                    });
-                }
-            }
-        });
-    }
-]);
-
-/**
- * Created by amitav on 12/29/15.
- */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams) {
-
-        /*check if projects are loaded*/
-        if (action && action.projects != undefined) {
-            action.projects.success(function(response) {
-                console.log('all projects', response);
-                $scope.projects = response;
-                $scope.showTicketForm = true;
-            });
-        }
-
-        /*check if users are loaded*/
-        if (action && action.users != undefined) {
-            action.users.success(function(response) {
-                console.log('all users', response);
-                $scope.users = response;
-            });
-        }
-
-        /*load ticket type*/
-        if (action && action.type != undefined) {
-            action.type.success(function(response) {
-                console.log('all type', response);
-                $scope.ticketType = response;
-            });
-        }
-
-        /*load tickets*/
-        if (action && action.tickets != undefined) {
-            action.tickets.success(function(response) {
-                console.log('all tickets', response);
-                $scope.tickets = response;
-                $scope.viewTickets = true;
-            });
-        }
-
-        /*loading single ticket*/
-        if (action && action.ticket != undefined) {
-            $scope.showTicketForm = false;
-            action.ticket.success(function(response) {
-                console.log('thisTicket', response);
-                $scope.newTicket = response.data;
-                $scope.showTicketForm = true;
-            });
-        }
-
-        /*loading user's tickets*/
-        if (action && action.myTickets != undefined) {
-            action.myTickets.success(function(response) {
-                console.log('myTickets', response);
-                $scope.myTickets = response.data;
-                $scope.viewMyTickets = true;
-            });
-        }
-
-        /*model*/
-        angular.extend($scope, {
-            formUrl: baseUrl + 'templates/tickets/ticket-form.html',
-            showTicketForm: false,
-            newTicket: {
-                type: 'none'
-            },
-            projects: {},
-            ticketType: {},
-            tickets: {},
-            myTickets: {},
-            viewMyTickets: false,
-            viewTickets: true
-        });
-
-        /*methods*/
-        angular.extend($scope, {
-            saveNewTicket: function(addTicketForm) {
-                if (addTicketForm.$valid) {
-                    // console.log($scope.newTicket);
-                    var ticketData = {
-                        title: $scope.newTicket.title,
-                        description: $scope.newTicket.comment,
-                        complete_date: $scope.newTicket.completeDate,
-                        project_id: $scope.newTicket.project[0].id,
-                        assigned_to: $scope.newTicket.users[0].id,
-                        followers: [],
-                        type: $scope.newTicket.type
-                    };
-
-                    /*Adding follower ids*/
-                    angular.forEach($scope.newTicket.followers, function(value, key) {
-                        ticketData.followers.push(value.id);
-                    });
-
-                    ticketFactory.saveTicket(ticketData).success(function(response) {
-                        console.log(response);
-                        $location.path('/ticket/list');
-                        snackbar.create("New ticket added.", 1000);
-                    });
-                }
-            },
-            updateTicket: function(updateTicketForm) {
-                if (updateTicketForm.$valid) {
-                    var ticketData = {
-                        title: $scope.newTicket.title,
-                        description: $scope.newTicket.comment,
-                        complete_date: $scope.newTicket.completeDate,
-                        project_id: $scope.newTicket.project[0].id,
-                        assigned_to: $scope.newTicket.users[0].id,
-                        followers: [],
-                        type: $scope.newTicket.type,
-                        id: $routeParams.ticketId
-                    };
-
-                    /*Adding follower ids*/
-                    angular.forEach($scope.newTicket.followers, function(value, key) {
-                        ticketData.followers.push(value.id);
-                    });
-
-                    ticketFactory.updateTicket(ticketData).success(function(response) {
-                        console.log(response);
-                        $location.path('/ticket/list');
-                        snackbar.create("Ticket updated.", 1000);
-                    });
-                }
-            }
-        });
-
-    }
-]);
-
-myApp.factory('ticketFactory', ['$http', function($http) {
-    var ticketFactory = {};
-
-    ticketFactory.saveTicket = function(ticketData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-new-ticket',
-            method: 'POST',
-            data: ticketData
-        });
-    }
-
-    ticketFactory.updateTicket = function(ticketData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/update-ticket',
-            method: 'POST',
-            data: ticketData
-        });
-    }
-
-    ticketFactory.getAllTickets = function() {
-        return $http.get(baseUrl + 'api/get-ticket');
-    }
-
-    ticketFactory.getTicketById = function(id) {
-        return $http.get(baseUrl + 'api/get-ticket-by-id/' + id);
-    }
-
-    ticketFactory.getTickeType = function() {
-        return $http.get(baseUrl + 'api/get-ticket-types');
-    }
-
-    ticketFactory.getMyTickets = function() {
-        return $http.get(baseUrl + 'api/get-my-tickets');
-    }
-
-    return ticketFactory;
-}])
 
 myApp.controller('logoutController', ['$scope', 'userFactory',
     function($scope, userFactory) {
