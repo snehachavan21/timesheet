@@ -131,6 +131,27 @@ class RoleController extends Controller
         return redirect('role');
     }
 
+    public function updateData(Request $request)
+    {
+        $id =  $request->input('id');
+        $rules = ['name' => 'required'];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        // process the login
+        if ($validator->fails()) {
+            return Redirect::to('role/' . $id . '/edit')
+                ->withErrors($validator)
+                ->withInput();
+        }
+        // store
+        $role = Role::findOrFail($id);
+        $role->name = $request->input('name');
+        $role->save();
+
+        Session::flash('message', 'Role Successfully updated!');
+        return redirect('role');
+    }
     /**
      * Remove the specified resource from storage.
      *

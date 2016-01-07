@@ -154,4 +154,19 @@ class TimeEntry extends Model
             ->get();
         return $query;
     }
+    //Function to check if users have filled there timesheet for previous day
+    public function getPreviousDayTimeEntry()
+    {
+         /*$query = DB::table('time_entries as te')
+             ->orderBy('te.created_at', 'desc')
+             ->whereRaw(' DATE(te.created_at) = DATE( DATE_SUB( NOW() , INTERVAL 1 DAY ))  ')
+             ->get();*/
+
+        $query = DB::table('users')
+            ->whereRaw(' id not in(select user_id from time_entries
+        where DATE(created_at) = DATE( DATE_SUB( NOW() , INTERVAL 1 DAY )) order by `created_at` desc)')
+            ->get();
+
+        return $query;
+    }
 }

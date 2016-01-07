@@ -14,10 +14,11 @@
     @endforeach
   </div>
   @endif
-
-  <form action="{!! url('role') !!}">
-    <input type="hidden" name="_method" value="PUT">
+  <form action="{{ url('role/update-data') }}" method="POST">
+  <!--<form action="{!! url('role') !!}">
+    <input type="hidden" name="_method" value="PUT">-->
     <input type="hidden" name="_token" value="{{ csrf_token() }}">
+    <input type='hidden' class="form-control" name="id" value="{{ $role->id }}">
     <div class="form-group">
       <label>Name  :  </label>
       <input type='text' class="form-control" name="name" value="{{ $role->name }}">

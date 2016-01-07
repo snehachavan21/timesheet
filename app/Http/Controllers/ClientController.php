@@ -138,6 +138,31 @@ class ClientController extends Controller
         return redirect('clients');
     }
 
+
+    public function updateData(Request $request)
+    {
+        $id =  $request->input('id');
+        $rules = ['name' => 'required', 'country' => 'required'];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        // process the login
+        if ($validator->fails()) {
+            return Redirect::to('clients/' . $id . '/edit')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        // store
+        $client = Client::findOrFail($id);
+        $client->name = $request->input('name');
+        $client->country = $request->input('country');
+        $client->save();
+
+        Session::flash('message', 'Client Successfully updated!');
+        return redirect('clients');
+    }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -153,4 +178,5 @@ class ClientController extends Controller
         Session::flash('message', 'Client successfully deleted!');
         return Redirect::to('clients');
     }
+
 }

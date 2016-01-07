@@ -41,8 +41,10 @@ Route::group(['middleware' => 'csrf'], function () {
         get('project/delete/{id}', 'ProjectController@destroy');
 
         get('clients/delete/{id}', 'ClientController@destroy');
+        post('clients/update-data', 'ClientController@updateData');
 
         get('role/delete/{id}', 'RoleController@destroy');
+        post('role/update-data', 'RoleController@updateData');
 
         Route::group(['prefix' => 'manager'], function () {
             get('time-tracker-report', 'ManagerController@getTimeReport');
