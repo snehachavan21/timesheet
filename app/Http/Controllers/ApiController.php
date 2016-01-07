@@ -555,4 +555,43 @@ class ApiController extends Controller
 
         return response(['data' => $myTickets], 200);
     }
+
+    public function saveTicketConversation(Request $request)
+    {
+        $ticketId = $request->input('ticketId');
+        $comment = $request->input('comment');
+
+        try {
+            DB::beginTransaction();
+            $comment = new Comment;
+            $comment->comment = $request->input('comment');
+            $comment->user_id = Auth::user()->id;
+            $comment->parent_id = 0;
+            $comment->status = 1;
+            $comment->save();
+
+            DB::table('commentables')->insert([
+                'comment_id' => $comment->id,
+                'commentable_id' => $ticketId,
+                'commentable_type' => 'App\Ticket',
+            ]);
+
+            DB::commit();
+
+            $ticket = new Ticket;
+            $response = $ticket->getTicketComments($ticketId);
+
+            return response(['data' => $response], 200);
+        } catch (\PDOException $e) {
+            DB::rollBack();
+        }
+    }
+
+    public function getTicketComments($id)
+    {
+        $ticket = new Ticket;
+        $result = $ticket->getTicketComments($id);
+
+        return response(['data' => $result], 200);
+    }
 }

@@ -75,3 +75,12 @@
 .ta-text.ta-editor {
   border: 1px solid #cfcfcf;
 }
+
+.conversation-add .ta-scroll-window > .ta-bind {
+  min-height: 100px;
+}
+
+.conversation-add .ta-editor.ta-html,
+.conversation-add .ta-scroll-window.form-control {
+  min-height: 100px;
+}

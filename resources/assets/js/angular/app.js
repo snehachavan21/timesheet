@@ -285,13 +285,14 @@ myApp.config(['$routeProvider', '$locationProvider',
             templateUrl: '/templates/tickets/view-ticket.html',
             controller: 'ticketController',
             resolve: {
-                action: function(projectFactory, userFactory, ticketFactory, $route) {
+                action: function(projectFactory, userFactory, ticketFactory, $route, commentFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType(),
                         status: ticketFactory.getTickeStatus(),
-                        ticket: ticketFactory.getTicketById($route.current.params.ticketId)
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
                     }
                 }
             }

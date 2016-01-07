@@ -18,6 +18,11 @@ class Ticket extends Model
      */
     protected $fillable = ['title', 'description', 'project_id', 'assigned_to', 'estimate_id', 'status', 'complete_date', 'type'];
 
+    public function comments()
+    {
+        return $this->morphToMany('App\Comment', 'commentable');
+    }
+
     protected function getTicketBaseQuery()
     {
         $select = ['t.*', 'u.name as assigned_to', 'p.name as project'];
@@ -74,5 +79,20 @@ class Ticket extends Model
         }
 
         return $result;
+    }
+
+    public function getTicketComments($id)
+    {
+        $select = ['c.comment', 'c.id', 'u.name', 'c.created_at'];
+
+        $query = DB::table('commentables as cb')
+            ->select($select)
+            ->where('cb.commentable_id', $id)
+            ->join('comments as c', 'c.id', '=', 'cb.comment_id', 'left')
+            ->join('users as u', 'u.id', '=', 'c.user_id', 'left')
+            ->orderBy('c.id', 'desc')
+            ->get();
+
+        return $query;
     }
 }

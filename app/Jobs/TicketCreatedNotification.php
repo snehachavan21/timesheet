@@ -52,7 +52,7 @@ class TicketCreatedNotification extends Job implements SelfHandling, ShouldQueue
             'fromName' => 'Amitav Roy',
             'to' => $ticket->users[0]->email,
             'toName' => 'Amitav Roy',
-            'subject' => '[New ticket] ' . $ticket->id . '-' . $ticket->title,
+            'subject' => '[New ticket] #' . $ticket->id . ' - ' . $ticket->title,
             'mailBody' => view('mails.ticket-assigned', compact('ticket')),
         ]);
 
@@ -67,7 +67,7 @@ class TicketCreatedNotification extends Job implements SelfHandling, ShouldQueue
                         'fromName' => 'Amitav Roy',
                         'to' => $follower->email,
                         'toName' => $follower->name,
-                        'subject' => '[New ticket to follow] ' . $ticket->id . '-' . $ticket->title,
+                        'subject' => '[New ticket to follow] #' . $ticket->id . ' - ' . $ticket->title,
                         'mailBody' => view('mails.ticket-assigned', compact('ticket')),
                     ]);
                 }
