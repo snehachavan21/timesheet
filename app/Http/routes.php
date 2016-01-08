@@ -84,6 +84,8 @@ Route::group(['middleware' => 'csrf'], function () {
             get('get-ticket-by-id/{id}', 'ApiController@getTicketById');
             post('update-ticket', 'ApiController@updateTicket');
             get('get-my-tickets', 'ApiController@getMyTickets');
+            post('save-ticket-conversation', 'ApiController@saveTicketConversation');
+            get('get-ticket-comments/{id}', 'ApiController@getTicketComments');
         });
 
         Route::group(['prefix' => 'spa'], function () {

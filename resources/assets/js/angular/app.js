@@ -6,7 +6,8 @@ var myApp = angular.module('myApp', [
     'chart.js',
     'angular.snackbar',
     'angular-loading-bar',
-    'textAngular'
+    'textAngular',
+    'cfp.hotkeys'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
@@ -55,8 +56,18 @@ myApp.filter('ucfirst', function() {
     }
 });
 
-myApp.controller('globalController', ['$scope', '$location',
-    function($scope, $location) {
+myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
+    function($scope, $location, hotkeys) {
+
+        /*hotkeys.add({
+            combo: 'ctrl+t+e',
+            description: 'This one goes to 11',
+            callback: function() {
+                $location.path('ticket/my-tickets');
+                console.log(123);
+            }
+        });*/
+
         angular.extend($scope, {
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
@@ -285,13 +296,14 @@ myApp.config(['$routeProvider', '$locationProvider',
             templateUrl: '/templates/tickets/view-ticket.html',
             controller: 'ticketController',
             resolve: {
-                action: function(projectFactory, userFactory, ticketFactory, $route) {
+                action: function(projectFactory, userFactory, ticketFactory, $route, commentFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType(),
                         status: ticketFactory.getTickeStatus(),
-                        ticket: ticketFactory.getTicketById($route.current.params.ticketId)
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
                     }
                 }
             }

@@ -18,6 +18,11 @@ class Ticket extends Model
      */
     protected $fillable = ['title', 'description', 'project_id', 'assigned_to', 'estimate_id', 'status', 'complete_date', 'type'];
 
+    public function comments()
+    {
+        return $this->morphToMany('App\Comment', 'commentable');
+    }
+
     protected function getTicketBaseQuery()
     {
         $select = ['t.*', 'u.name as assigned_to', 'p.name as project'];
@@ -32,20 +37,30 @@ class Ticket extends Model
 
     public function getTickets()
     {
-        $query = $this->getTicketBaseQuery();
+        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+            FROM tickets AS t
+            LEFT JOIN (
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb GROUP BY cb.`commentable_id`
+              ) AS commentData
+        ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
+        LEFT JOIN projects AS p ON p.id = t.`project_id`
+        LEFT JOIN users AS u ON u.id = t.`assigned_to` ORDER BY t.id DESC"));
 
-        $result = $query->get();
-
-        return $result;
+        return $query;
     }
 
     public function getMyTickets()
     {
-        $query = $this->getTicketBaseQuery();
-        $query->where('t.assigned_to', Auth::user()->id);
-        $result = $query->get();
+        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+            FROM tickets AS t
+            LEFT JOIN (
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb GROUP BY cb.`commentable_id`
+              ) AS commentData
+        ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
+        LEFT JOIN projects AS p ON p.id = t.`project_id`
+        LEFT JOIN users AS u ON u.id = t.`assigned_to` WHERE u.id = ? ORDER BY t.id DESC"), [Auth::user()->id]);
 
-        return $result;
+        return $query;
     }
 
     public function getTicketById($id)
@@ -74,5 +89,20 @@ class Ticket extends Model
         }
 
         return $result;
+    }
+
+    public function getTicketComments($id)
+    {
+        $select = ['c.comment', 'c.id', 'u.name', 'c.created_at'];
+
+        $query = DB::table('commentables as cb')
+            ->select($select)
+            ->where('cb.commentable_id', $id)
+            ->join('comments as c', 'c.id', '=', 'cb.comment_id', 'left')
+            ->join('users as u', 'u.id', '=', 'c.user_id', 'left')
+            ->orderBy('c.id', 'desc')
+            ->get();
+
+        return $query;
     }
 }
