@@ -47,21 +47,20 @@ class Ticket extends Model
         LEFT JOIN users AS u ON u.id = t.`assigned_to` ORDER BY t.id DESC"));
 
         return $query;
-
-        $query = $this->getTicketBaseQuery();
-
-        $result = $query->get();
-
-        return $result;
     }
 
     public function getMyTickets()
     {
-        $query = $this->getTicketBaseQuery();
-        $query->where('t.assigned_to', Auth::user()->id);
-        $result = $query->get();
+        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+            FROM tickets AS t
+            LEFT JOIN (
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb GROUP BY cb.`commentable_id`
+              ) AS commentData
+        ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
+        LEFT JOIN projects AS p ON p.id = t.`project_id`
+        LEFT JOIN users AS u ON u.id = t.`assigned_to` WHERE u.id = ? ORDER BY t.id DESC"), [Auth::user()->id]);
 
-        return $result;
+        return $query;
     }
 
     public function getTicketById($id)
