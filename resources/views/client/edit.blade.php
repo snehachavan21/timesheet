@@ -14,9 +14,9 @@
             @endforeach
         </div>
     @endif
-  <form action="{{ url('clients/update-data') }}" method="POST">
-    <!--<form action="{!! url('clients') !!}">
-    <input type="hidden" name="_method" value="PUT">-->
+  <!--<form action="{{ url('clients/update-data') }}" method="POST">-->
+    <form action="{{ route('clients.update', $client->id) }}" method="POST">
+     <input type="hidden" name="_method" value="PUT">
     <input type="hidden" name="_token" value="{{ csrf_token() }}">
     <input type='hidden' class="form-control" name="id" value="{{ $client->id }}">
     <div class="form-group">  
