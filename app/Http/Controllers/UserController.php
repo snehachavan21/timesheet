@@ -74,10 +74,15 @@ class UserController extends Controller
         return redirect('/');
     }
 
-    public function doLogout()
+    public function doLogout(Request $request)
     {
         Auth::logout(); // log the user out of our application
-        return response('user logged out', 200);
+
+        if ($request->ajax()) {
+            return response('user logged out', 200);
+        }
+
+        return redirect('/');
     }
 
     public function create()

@@ -16,7 +16,6 @@
         <table class="table table-bordered table-striped table-hover">
             <thead>
                 <tr>
-                    <th>Id</th>
                     <th>Title</th>
                     <th>Project</th>
                     <th>Assigned To</th>
@@ -28,11 +27,13 @@
 
             <tbody>
                 <tr ng-repeat="ticket in myTickets">
-                    <td>{{ticket.id}}</td>
-                    <td><a href="#/ticket/view/{{ticket.id}}">{{ticket.title}}</a></td>
+                    <td>
+                        <a href="#/ticket/view/{{ticket.id}}">#{{ticket.id}} {{ticket.title}}</a>
+                        <span class="pull-right" ng-show="(ticket.ccount == null) ? false : true"> <i class="fa fa-comment"></i> {{(ticket.ccount == null) ? 0 : ticket.ccount}}</span>
+                    </td>
                     <td>{{ticket.project}}</td>
                     <td>{{ticket.assigned_to}}</td>
-                    <td>{{ticket.type}}</td>
+                    <td>{{ticket.type | ucfirst }}</td>
                     <td>{{ticket.status}}</td>
                     <td>{{momentTime(ticket.complete_date, "Do MMM")}}</td>
                 </tr>

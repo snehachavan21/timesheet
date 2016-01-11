@@ -1,8 +1,17 @@
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+
+        /*Adding hotkeys*/
+        hotkeys.add({
+            combo: 'ctrl+s+d',
+            description: 'This one goes to 11',
+            callback: function() {
+                $scope.saveNewConversation();
+            }
+        });
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -148,18 +157,21 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                 }
             },
             saveNewConversation: function() {
-                console.log('newConversation', $scope.newConversation);
-                var data = {
-                    comment: $scope.newConversation,
-                    ticketId: $routeParams.ticketId
-                };
+                if ($scope.newConversation != "") {
+                    var data = {
+                        comment: $scope.newConversation,
+                        ticketId: $routeParams.ticketId
+                    };
 
-                commentFactory.saveTicketConversation(data).success(function(response) {
-                    console.log('Conversation saved');
-                    console.log(response);
-                    $scope.newConversation = "";
-                    $scope.ticketComments = response.data;
-                });
+                    commentFactory.saveTicketConversation(data).success(function(response) {
+                        console.log('Conversation saved');
+                        console.log(response);
+                        $scope.newConversation = "";
+                        $scope.ticketComments = response.data;
+                    });
+                } else {
+                    snackbar.create("Add some text before saving the discussion.", 1000);
+                }
             }
         });
 
