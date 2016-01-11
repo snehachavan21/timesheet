@@ -131,7 +131,7 @@ class RoleController extends Controller
         return redirect('role');
     }
 
-    /**
+     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id

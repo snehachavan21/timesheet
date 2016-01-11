@@ -14,21 +14,23 @@
             @endforeach
         </div>
     @endif
-
-  <form action="{!! url('clients') !!}">
-    <input type="hidden" name="_method" value="PUT">
-    <input type="hidden" name="_token" value="{{ csrf_token() }}">   
+  <!--<form action="{{ url('clients/update-data') }}" method="POST">-->
+    <form action="{{ route('clients.update', $client->id) }}" method="POST">
+     <input type="hidden" name="_method" value="PUT">
+    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+    <input type='hidden' class="form-control" name="id" value="{{ $client->id }}">
     <div class="form-group">  
         <label>Name  :  </label>                   
         <input type='text' class="form-control" name="name" value="{{ $client->name }}">
     </div>
 
     <div class="form-group">
+      <?php $country = $client->country; ?>
       <label>Country  :  </label>  
       <select name="country">
-      <option value="IN">IN</option>
-      <option value="US">US</option>
-      <option value="UK">UK</option>                     
+        <option value="IN" <?php echo ($country == "IN") ? "SELECTED" : ""; ?> >IN</option>
+        <option value="US" <?php  echo ($country == "US") ? "SELECTED" : ""; ?> >US</option>
+        <option value="UK" <?php echo ($country == "UK") ? "SELECTED" : ""; ?> >UK</option>
       </select>
     </div>
 
