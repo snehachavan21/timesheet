@@ -1,8 +1,17 @@
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+
+        /*Adding hotkeys*/
+        hotkeys.add({
+            combo: 'ctrl+s+d',
+            description: 'This one goes to 11',
+            callback: function() {
+                $scope.saveNewConversation();
+            }
+        });
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -65,6 +74,15 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*loading ticket comments*/
+        if (action && action.comments != undefined) {
+            action.comments.success(function(response) {
+                console.log('ticket comments', response);
+                $scope.ticketComments = response.data;
+                $scope.showComments = true;
+            });
+        }
+
         /*model*/
         angular.extend($scope, {
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
@@ -79,7 +97,9 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             tickets: {},
             myTickets: {},
             viewMyTickets: false,
-            viewTickets: true
+            showComments: false,
+            viewTickets: true,
+            newConversation: ""
         });
 
         /*methods*/
@@ -134,6 +154,23 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         $location.path('/ticket/list');
                         snackbar.create("Ticket updated.", 1000);
                     });
+                }
+            },
+            saveNewConversation: function() {
+                if ($scope.newConversation != "") {
+                    var data = {
+                        comment: $scope.newConversation,
+                        ticketId: $routeParams.ticketId
+                    };
+
+                    commentFactory.saveTicketConversation(data).success(function(response) {
+                        console.log('Conversation saved');
+                        console.log(response);
+                        $scope.newConversation = "";
+                        $scope.ticketComments = response.data;
+                    });
+                } else {
+                    snackbar.create("Add some text before saving the discussion.", 1000);
                 }
             }
         });

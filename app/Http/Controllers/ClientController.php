@@ -138,6 +138,7 @@ class ClientController extends Controller
         return redirect('clients');
     }
 
+
     /**
      * Remove the specified resource from storage.
      *
@@ -153,4 +154,5 @@ class ClientController extends Controller
         Session::flash('message', 'Client successfully deleted!');
         return Redirect::to('clients');
     }
+
 }

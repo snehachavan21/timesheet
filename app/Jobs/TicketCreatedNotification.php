@@ -44,27 +44,34 @@ class TicketCreatedNotification extends Job implements SelfHandling, ShouldQueue
             ->where('tf.ticket_id', $this->ticket->id)
             ->get();
 
-        // \Log::info('Handle ticket ' . $this->ticket->id);
+        // \Log::info(print_r($ticket, 1));
 
         // send email to user who was assigned the ticket
         $mail->mail([
             'from' => 'amitav.roy@focalworks.in',
             'fromName' => 'Amitav Roy',
-            'to' => 'amitav.roy@focalworks.in',
+            'to' => $ticket->users[0]->email,
             'toName' => 'Amitav Roy',
-            'subject' => '[New ticket] ' . $ticket->id . '-' . $ticket->title,
+            'subject' => '[New ticket] #' . $ticket->id . ' - ' . $ticket->title,
             'mailBody' => view('mails.ticket-assigned', compact('ticket')),
         ]);
 
-        foreach ($followers as $follower) {
-            $mail->mail([
-                'from' => 'amitav.roy@focalworks.in',
-                'fromName' => 'Amitav Roy',
-                'to' => $follower->email,
-                'toName' => $follower->name,
-                'subject' => '[New ticket to follow] ' . $ticket->id . '-' . $ticket->title,
-                'mailBody' => view('mails.ticket-assigned', compact('ticket')),
-            ]);
+        // sending mail to all the followers
+        if ($followers) {
+            foreach ($followers as $follower) {
+                // user who is assigned should not get the email again if he is
+                // also in the followers list
+                if ($ticket->users[0]->email != $follower->email) {
+                    $mail->mail([
+                        'from' => 'amitav.roy@focalworks.in',
+                        'fromName' => 'Amitav Roy',
+                        'to' => $follower->email,
+                        'toName' => $follower->name,
+                        'subject' => '[New ticket to follow] #' . $ticket->id . ' - ' . $ticket->title,
+                        'mailBody' => view('mails.ticket-assigned', compact('ticket')),
+                    ]);
+                }
+            }
         }
     }
 }
