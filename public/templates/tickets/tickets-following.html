@@ -2,16 +2,16 @@
 
 <div class="row">
     <div class="col-sm-12">
-        <h3>Tickets assigned to me</h3>
+        <h3>Tickets I am following</h3>
     </div>
 </div>
 
 <div class="row">
-    <div class="col-sm-12" ng-hide="viewMyTickets">
+    <div class="col-sm-12" ng-hide="viewTicketsFollowing">
         <i class="fa fa-refresh fa-spin fa-5x"></i>
     </div>
 
-    <div class="col-sm-12" ng-show="viewMyTickets">
+    <div class="col-sm-12" ng-show="viewTicketsFollowing">
         <a href="#/ticket/add" class="btn btn-primary pull-right"><i class="fa fa-plus"></i> Add</a>
         <br>
         <br>
@@ -28,7 +28,7 @@
             </thead>
 
             <tbody>
-                <tr ng-repeat="ticket in myTickets">
+                <tr ng-repeat="ticket in ticketsFollowing">
                     <td>
                         <a href="#/ticket/view/{{ticket.id}}">#{{ticket.id}} {{ticket.title}}</a>
                         <span class="pull-right" ng-show="(ticket.ccount == null) ? false : true"> <i class="fa fa-comment"></i> {{(ticket.ccount == null) ? 0 : ticket.ccount}}</span>

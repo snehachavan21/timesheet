@@ -74,6 +74,14 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        if (action && action.ticketsFollowing != undefined) {
+            action.ticketsFollowing.success(function(response) {
+                console.log('tickets following', response);
+                $scope.ticketsFollowing = response.data;
+                $scope.viewTicketsFollowing = true;
+            });
+        }
+
         /*loading ticket comments*/
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
@@ -99,6 +107,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             viewMyTickets: false,
             showComments: false,
             viewTickets: true,
+            viewTicketsFollowing: false,
             newConversation: ""
         });
 
