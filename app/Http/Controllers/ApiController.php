@@ -42,8 +42,24 @@ class ApiController extends Controller
      */
     public function getFilterReport(Request $request)
     {
+//        \Log::info(print_r($request->all(),true));
         $timeEntryObj = new TimeEntry;
-        return $timeEntryObj->getManagerTrackerReport();
+
+        $timeEntryQuery = $timeEntryObj->getManagerTrackerReport();
+
+        $total_records = count($timeEntryObj->getManagerTrackerReport()->get());
+        $range = explode('-', $request->header('range'));
+
+        $timeEntryQuery->skip($range[0]);
+
+        $limit = ($range[0] == 0)?$range[1]:($range[1]-$range[0]);
+
+        $timeEntryQuery->limit($limit);
+
+        return response($timeEntryQuery->get())
+            ->header('Content-Range', "{$request->header('range')}/{$total_records}");
+
+        return $timeEntryQuery->get();
     }
 
     /**

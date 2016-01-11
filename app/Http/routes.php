@@ -54,7 +54,7 @@ Route::group(['middleware' => 'csrf'], function () {
         });
 
         Route::group(['prefix' => 'api'], function () {
-            get('time-report', 'ApiController@getFilterReport');
+            post('time-report', 'ApiController@getFilterReport');
             get('get-user_data', 'ApiController@getUserObjById');
             get('get-user-list', 'ApiController@getUserList');
             post('get-user-list-by-role', 'ApiController@getUserListByRole');

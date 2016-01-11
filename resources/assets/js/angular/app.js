@@ -6,7 +6,8 @@ var myApp = angular.module('myApp', [
     'chart.js',
     'angular.snackbar',
     'angular-loading-bar',
-    'textAngular'
+    'textAngular',
+    'bgf.paginateAnything'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',

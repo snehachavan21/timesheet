@@ -57,8 +57,7 @@ class TimeEntry extends Model
             ->join('taggables as tg', 'tg.taggable_id', '=', 'te.id', 'left')
             ->join('tags as t', 't.id', '=', 'tg.tag_id', 'left')
             ->groupBy('te.id')
-            ->orderBy('te.created_at', 'desc')
-            ->get();
+            ->orderBy('te.created_at', 'desc');
 
         return $query;
     }

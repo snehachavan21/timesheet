@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="{{ url('vendor/css/angular.snackbar.css') }}">
   <link rel="stylesheet" href="{{ url('vendor/css/loading-bar.min.css') }}">
   <link rel="stylesheet" href="{{ url('vendor/css/textAngular.css') }}">
-  <link rel="stylesheet" href="{{ elixir('css/app.css') }}" />
+  <link rel="stylesheet" href="{{ url(elixir('css/app.css')) }}" />
 
   <style type="text/css">
     *, p, body, h1, h2, h3, h4, h5, h6 {
@@ -60,8 +60,9 @@
   <script type="text/javascript" src="{{ url('vendor/textAngular-rangy.min.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/textAngular-sanitize.min.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/textAngular.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url('vendor/paginate-anything.js') }}"></script>
 
-  <script type="text/javascript" src="{{ elixir('js/app.js') }}"></script>
+  <script type="text/javascript" src="{{ url(elixir('js/app.js')) }}"></script>
   @yield('scripts')
 </body>
 </html>

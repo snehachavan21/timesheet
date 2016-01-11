@@ -1,5 +1,39 @@
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory, action) {
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
+
+        $scope.perPage = 5;
+        $scope.page = 0;
+
+        $scope.clientLimit = 250;
+        $scope.tplUrl = baseUrl+"/templates/partials/paginate-anything.html";
+
+        $scope.$on('pagination:loadStart', function (event, status, config) {
+            $scope.page = event.currentScope.page;
+            $scope.perPage = event.currentScope.perPage;
+
+            $scope.postData = {
+
+            };
+        });
+
+
+
+        //$scope.$watch('page', function(page) { $location.search('page', page); });
+        //$scope.$watch('perPage', function(page) { $location.search('perPage', page); });
+
+
+
+        //$scope.$on('$locationChangeSuccess', function() {
+        //    console.log('change success');
+        //    var page = +$location.search().page,
+        //        perPage = +$location.search().perPage;
+        //    if(page >= 0) { $scope.page = page; };
+        //    if(perPage >= 0) { $scope.perPage = perPage; };
+        //});
+
+        //$scope.$on('pagination:loadPage', function (event, status, config) {
+        //
+        //});
 
         /*check if clients are loaded*/
         if (action && action.clients != undefined) {
@@ -9,21 +43,21 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             });
         }
 
-        timeEntry.getEntries().then(function(response) {
-                console.log('time entries', response.data);
-                $scope.timeEntries = response.data;
-                angular.forEach(response.data, function(value, key) {
-                    $scope.totalTime = $scope.totalTime + value.time;
-                });
-                return response;
-            })
-            .then(function() {
+        //timeEntry.getEntries().then(function(response) {
+        //        console.log('time entries', response.data);
+        //        $scope.timeEntries = response.data;
+        //        angular.forEach(response.data, function(value, key) {
+        //            $scope.totalTime = $scope.totalTime + value.time;
+        //        });
+        //        return response;
+        //    })
+        //    .then(function() {
                 userFactory.getUserList().then(function(response) {
                     console.log('user list', response.data);
                     angular.forEach(response.data, function(value, key) {
                         $scope.users.push(value);
                     });
-                });
+                //});
             })
             .then(function() {
                 projectFactory.getProjectList().then(function(response) {
