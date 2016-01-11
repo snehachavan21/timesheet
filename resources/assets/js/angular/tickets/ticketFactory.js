@@ -43,5 +43,9 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-my-tickets');
     }
 
+    ticketFactory.getTicketsFollowing = function() {
+        return $http.get(baseUrl + 'api/get-tickets-following');
+    }
+
     return ticketFactory;
 }])

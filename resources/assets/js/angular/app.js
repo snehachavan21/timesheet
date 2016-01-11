@@ -71,6 +71,7 @@ myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
         angular.extend($scope, {
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
+            ticketsTab: '/templates/tickets/ticket-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
@@ -316,6 +317,18 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function(ticketFactory) {
                     return {
                         myTickets: ticketFactory.getMyTickets(),
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/tickets-following', {
+            templateUrl: '/templates/tickets/tickets-following.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory) {
+                    return {
+                        ticketsFollowing: ticketFactory.getTicketsFollowing(),
                     }
                 }
             }

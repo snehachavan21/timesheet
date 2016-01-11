@@ -63,6 +63,21 @@ class Ticket extends Model
         return $query;
     }
 
+    public function getTicketsFollowing()
+    {
+        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+            FROM tickets AS t
+            LEFT JOIN (
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
+              ) AS commentData
+        ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
+        LEFT JOIN projects AS p ON p.id = t.`project_id`
+        LEFT JOIN ticket_followers as tf ON tf.ticket_id = t.id
+        LEFT JOIN users AS u ON u.id = t.`assigned_to` WHERE tf.user_id = ? ORDER BY t.id DESC"), [Auth::user()->id]);
+
+        return $query;
+    }
+
     public function getTicketById($id)
     {
         $select = ['t.description as comment', 't.title', 't.type', 't.project_id', 't.assigned_to', 't.complete_date', 't.id', 't.created_at', 't.created_by', 't.status'];

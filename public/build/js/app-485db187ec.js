@@ -71,6 +71,7 @@ myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
         angular.extend($scope, {
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
+            ticketsTab: '/templates/tickets/ticket-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
@@ -316,6 +317,18 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function(ticketFactory) {
                     return {
                         myTickets: ticketFactory.getMyTickets(),
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/tickets-following', {
+            templateUrl: '/templates/tickets/tickets-following.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory) {
+                    return {
+                        ticketsFollowing: ticketFactory.getTicketsFollowing(),
                     }
                 }
             }
@@ -889,6 +902,14 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        if (action && action.ticketsFollowing != undefined) {
+            action.ticketsFollowing.success(function(response) {
+                console.log('tickets following', response);
+                $scope.ticketsFollowing = response.data;
+                $scope.viewTicketsFollowing = true;
+            });
+        }
+
         /*loading ticket comments*/
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
@@ -914,6 +935,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             viewMyTickets: false,
             showComments: false,
             viewTickets: true,
+            viewTicketsFollowing: false,
             newConversation: ""
         });
 
@@ -1036,6 +1058,10 @@ myApp.factory('ticketFactory', ['$http', function($http) {
 
     ticketFactory.getMyTickets = function() {
         return $http.get(baseUrl + 'api/get-my-tickets');
+    }
+
+    ticketFactory.getTicketsFollowing = function() {
+        return $http.get(baseUrl + 'api/get-tickets-following');
     }
 
     return ticketFactory;
