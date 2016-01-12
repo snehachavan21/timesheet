@@ -36,14 +36,6 @@ class TimeEntry extends Model
         return $this->morphToMany('App\Tag', 'taggable');
     }
 
-    public function getTotalForReport($subQuery) {
-        $subQuery->select(['time']);
-        \Log::info(print_r($subQuery->toSql(), 1));
-        $query = Model::selectRaw('count(*) AS totalCount, sum(time) as totalTime')
-            ->from(\DB::raw(' ( ' . $subQuery->toSql() . ' ) AS counted '));
-        return $query;
-    }
-
     public function getManagerTrackerReport()
     {
         $query = DB::table('time_entries as te')
