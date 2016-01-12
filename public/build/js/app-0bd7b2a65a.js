@@ -72,6 +72,7 @@ myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
             ticketsTab: '/templates/tickets/ticket-tab.html',
+            ticketDetailsTab: '/templates/tickets/ticket-details-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
@@ -408,45 +409,6 @@ myApp.factory('clientFactory', ['$http', function($http) {
     }
 
     return clientFactory;
-}]);
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function(commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    commentFactory.getTicketComments = function(ticketId) {
-        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
-    }
-
-    commentFactory.saveTicketConversation = function(conversationData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-ticket-conversation',
-            method: 'POST',
-            data: conversationData
-        });
-    }
-
-    return commentFactory;
 }]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
@@ -919,6 +881,15 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /**
+         * This check is required to get the active link on the tab 
+         * because ticket id is coming after the $http request
+         * and so the route function does not get ticket id
+         */
+        if ($routeParams.ticketId != undefined) {
+            $scope.ticketNum = $routeParams.ticketId;
+        }
+
         /*model*/
         angular.extend($scope, {
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
@@ -1067,71 +1038,43 @@ myApp.factory('ticketFactory', ['$http', function($http) {
     return ticketFactory;
 }])
 
-myApp.factory('timeEntry', ['$http', function($http) {
-    var timeEntry = {};
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
 
-    timeEntry.getEntries = function() {
-        return $http.get(baseUrl + 'api/time-report');
+    commentFactory.getProjectComments = function(projectId) {
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
     }
 
-    /*timeEntry.getUserList = function() {
-        return $http.get(baseUrl + 'api/get-user-list');
-    }*/
-
-    timeEntry.getSearchResult = function(filterParams) {
+    commentFactory.saveComment = function(commentData) {
         return $http({
             headers: {
                 'Content-Type': 'application/json'
             },
-            url: baseUrl + 'api/time-report-filter',
+            url: baseUrl + 'api/save-project-comment',
             method: 'POST',
-            data: filterParams
+            data: commentData
         });
     }
 
-    timeEntry.getTimeSheetEntryByDate = function() {
-        return $http.get(baseUrl + 'api/get-timeentry-by-date');
+    commentFactory.getTicketComments = function(ticketId) {
+        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
     }
 
-    timeEntry.getEntriesForEstimate = function(estimateId) {
-        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
-    }
-
-    timeEntry.getBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-backdate-entries');
-    }
-
-    timeEntry.saveBackDateEntry = function(entryData) {
+    commentFactory.saveTicketConversation = function(conversationData) {
         return $http({
             headers: {
                 'Content-Type': 'application/json'
             },
-            url: baseUrl + 'api/allow-backdate-entry',
+            url: baseUrl + 'api/save-ticket-conversation',
             method: 'POST',
-            data: entryData
+            data: conversationData
         });
     }
 
-    timeEntry.getRequestBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries');
-    }
-
-    timeEntry.getRequestBackDateEntriesById = function(id) {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
-    }
-
-    timeEntry.saveRequestBackDateEntry = function(entryData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/allow-request-backdate-entry',
-            method: 'POST',
-            data: entryData
-        });
-    }
-
-    return timeEntry;
+    return commentFactory;
 }]);
 
 myApp.controller('logoutController', ['$scope', 'userFactory',
@@ -1240,5 +1183,72 @@ myApp.factory('userFactory', ['$http', '$cookies',
         return userFactory;
     }
 ]);
+
+myApp.factory('timeEntry', ['$http', function($http) {
+    var timeEntry = {};
+
+    timeEntry.getEntries = function() {
+        return $http.get(baseUrl + 'api/time-report');
+    }
+
+    /*timeEntry.getUserList = function() {
+        return $http.get(baseUrl + 'api/get-user-list');
+    }*/
+
+    timeEntry.getSearchResult = function(filterParams) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/time-report-filter',
+            method: 'POST',
+            data: filterParams
+        });
+    }
+
+    timeEntry.getTimeSheetEntryByDate = function() {
+        return $http.get(baseUrl + 'api/get-timeentry-by-date');
+    }
+
+    timeEntry.getEntriesForEstimate = function(estimateId) {
+        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
+    }
+
+    timeEntry.getBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-backdate-entries');
+    }
+
+    timeEntry.saveBackDateEntry = function(entryData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/allow-backdate-entry',
+            method: 'POST',
+            data: entryData
+        });
+    }
+
+    timeEntry.getRequestBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries');
+    }
+
+    timeEntry.getRequestBackDateEntriesById = function(id) {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
+    }
+
+    timeEntry.saveRequestBackDateEntry = function(entryData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/allow-request-backdate-entry',
+            method: 'POST',
+            data: entryData
+        });
+    }
+
+    return timeEntry;
+}]);
 
 //# sourceMappingURL=app.js.map

@@ -63,7 +63,8 @@ class TrackerController extends Controller
 
     public function saveTrackerEntry(Request $request)
     {
-        // return $request->all();
+        return trim($request->input('desc'));
+        return $request->all();
         $validator = Validator::make($request->all(), [
             'desc' => 'required|min:5',
             'time' => 'required|numeric',

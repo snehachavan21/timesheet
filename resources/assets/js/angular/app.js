@@ -72,6 +72,7 @@ myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
             ticketsTab: '/templates/tickets/ticket-tab.html',
+            ticketDetailsTab: '/templates/tickets/ticket-details-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';

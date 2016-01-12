@@ -1,0 +1,22 @@
+<div class="row">
+    <div class="col-xs-12">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/{{ticketNum}}')">
+                <a href="#/ticket/view/{{newTicket.id}}">Ticket</a>
+            </li>
+            
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/discussion')">
+                <a href="#/ticket/view/:ticketId/discussion">Ticket discussion</a>
+            </li>
+
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/time-entries')">
+                <a href="#/ticket/view/:ticketId/time-entries">Ticket time entries</a>
+            </li>
+
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/attachments')">
+                <a href="#/ticket/view/:ticketId/attachments">Ticket attachments</a>
+            </li>
+        </ul>
+    </div>
+</div>

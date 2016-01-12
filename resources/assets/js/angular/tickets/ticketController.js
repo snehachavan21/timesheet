@@ -91,6 +91,15 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /**
+         * This check is required to get the active link on the tab 
+         * because ticket id is coming after the $http request
+         * and so the route function does not get ticket id
+         */
+        if ($routeParams.ticketId != undefined) {
+            $scope.ticketNum = $routeParams.ticketId;
+        }
+
         /*model*/
         angular.extend($scope, {
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
