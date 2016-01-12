@@ -660,4 +660,12 @@ class ApiController extends Controller
 
         return response(['data' => $result], 200);
     }
+
+    public function getTicketsFollowing()
+    {
+        $ticket = new Ticket;
+        $result = $ticket->getTicketsFollowing();
+
+        return response(['data' => $result], 200);
+    }
 }

@@ -40,8 +40,8 @@ class Ticket extends Model
         $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
             FROM tickets AS t
             LEFT JOIN (
-              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb GROUP BY cb.`commentable_id`
-              ) AS commentData
+                SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
+                ) AS commentData
         ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
         LEFT JOIN projects AS p ON p.id = t.`project_id`
         LEFT JOIN users AS u ON u.id = t.`assigned_to` ORDER BY t.id DESC"));
@@ -54,11 +54,26 @@ class Ticket extends Model
         $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
             FROM tickets AS t
             LEFT JOIN (
-              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb GROUP BY cb.`commentable_id`
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
               ) AS commentData
         ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
         LEFT JOIN projects AS p ON p.id = t.`project_id`
         LEFT JOIN users AS u ON u.id = t.`assigned_to` WHERE u.id = ? ORDER BY t.id DESC"), [Auth::user()->id]);
+
+        return $query;
+    }
+
+    public function getTicketsFollowing()
+    {
+        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+            FROM tickets AS t
+            LEFT JOIN (
+              SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
+              ) AS commentData
+        ON commentData.commentable_id = t.id AND commentData.commentable_type LIKE '%Ticket'
+        LEFT JOIN projects AS p ON p.id = t.`project_id`
+        LEFT JOIN ticket_followers as tf ON tf.ticket_id = t.id
+        LEFT JOIN users AS u ON u.id = t.`assigned_to` WHERE tf.user_id = ? ORDER BY t.id DESC"), [Auth::user()->id]);
 
         return $query;
     }
@@ -98,6 +113,7 @@ class Ticket extends Model
         $query = DB::table('commentables as cb')
             ->select($select)
             ->where('cb.commentable_id', $id)
+            ->where('cb.commentable_type', 'App\Ticket')
             ->join('comments as c', 'c.id', '=', 'cb.comment_id', 'left')
             ->join('users as u', 'u.id', '=', 'c.user_id', 'left')
             ->orderBy('c.id', 'desc')
