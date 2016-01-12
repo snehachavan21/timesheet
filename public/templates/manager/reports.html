@@ -88,14 +88,15 @@
                 page="page"
                 per-page="perPage"
                 client-limit="clientLimit"
-                collection="timeEntries2"
+                collection="timeEntries"
                 method="POST"
                 reload-page="false"
                 post-data="postData"
-                template-url="http://localhost:8000/templates/partials/paginate-anything.html"
-                url="'http://localhost:8000/api/time-report'">
+                template-url="../templates/partials/paginate-anything.html"
+                url="postUrl">
         </bgf-pagination>
-        <h6>Total time: {{totalTime}}</h6>
+
+        <h6>Total time: {{timeEntries.totalTime}}</h6>
         <table class="table table-striped table-bordered">
             <thead>
                 <tr class="success">
@@ -109,7 +110,7 @@
             </thead>
 
             <tbody>
-                <tr ng-repeat="(key, entry) in timeEntries2">
+                <tr ng-repeat="(key, entry) in timeEntries.data">
                     <td>{{entry.description}}</td>
                     <td>{{entry.username}}</td>
                     <td>{{entry.projectName}}</td>

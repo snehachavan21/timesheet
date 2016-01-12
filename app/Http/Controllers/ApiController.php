@@ -42,12 +42,64 @@ class ApiController extends Controller
      */
     public function getFilterReport(Request $request)
     {
-//        \Log::info(print_r($request->all(),true));
         $timeEntryObj = new TimeEntry;
-
         $timeEntryQuery = $timeEntryObj->getManagerTrackerReport();
+        $totalTime = 0;
+        $totalCount = 0;
 
-        $total_records = count($timeEntryObj->getManagerTrackerReport()->get());
+        //set filters on query
+        $filters = $request->input('filters');
+
+        if(isset($filters['desc']) && $filters['desc']!="") {
+            $timeEntryQuery->where('te.desc', $filters['desc']);
+        }
+
+        if(isset($filters['users']) && !empty($filters['users'])) {
+            $timeEntryQuery->whereIn('u.id', $filters['users']);
+        }
+
+        if(isset($filters['clients']) && !empty($filters['clients'])) {
+            $timeEntryQuery->whereIn('c.id', $filters['clients']);
+        }
+
+        if(isset($filters['projects']) && !empty($filters['projects'])) {
+            $timeEntryQuery->whereIn('p.id', $filters['projects']);
+        }
+
+        if(isset($filters['startDate']) && $filters['startDate']!="") {
+            $timeEntryQuery->whereDate('te.created_at','>=', date('Y-m-d', strtotime($filters['startDate'])));
+        }
+
+        if(isset($filters['endDate']) && $filters['endDate']!="") {
+            $timeEntryQuery->whereDate('te.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
+        }
+
+        //get total count and time sum
+        $aggregateResult = \DB::table(\DB::raw(' ( ' . $timeEntryQuery->select('time')->toSql() . ' ) AS counted '))
+            ->selectRaw('count(*) AS totalCount, sum(time) as totalTime')
+            ->mergeBindings($timeEntryQuery)->first();
+
+        if($aggregateResult) {
+            $totalCount = $aggregateResult->totalCount;
+            $totalTime = $aggregateResult->totalTime;
+        }
+
+        //used select field here as we are using same query to get count and time sum
+        //set select fields for listing
+        $select = [
+            'te.created_at as created_at',
+            'te.desc as description',
+            'te.time as time',
+            'u.name as username',
+            'p.name as projectName',
+            'c.name as clientName',
+            DB::raw("GROUP_CONCAT(t.name) as tags"),
+            DB::raw("DATE(te.created_at) as createdDate"),
+        ];
+
+        $timeEntryQuery->select($select);
+
+        //pagination limit
         $range = explode('-', $request->header('range'));
 
         $timeEntryQuery->skip($range[0]);
@@ -56,10 +108,8 @@ class ApiController extends Controller
 
         $timeEntryQuery->limit($limit);
 
-        return response($timeEntryQuery->get())
-            ->header('Content-Range', "{$request->header('range')}/{$total_records}");
-
-        return $timeEntryQuery->get();
+        return response(['data' => $timeEntryQuery->get(), 'totalTime' =>  $totalTime])
+            ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
     }
 
     /**

@@ -70,6 +70,7 @@
           },
           replace: true,
           controller: ['$scope', '$http', function($scope, $http) {
+          console.log($scope);
 
             $scope.reloadPage   = false;
             $scope.serverLimit  = Infinity; // it's not known yet
@@ -257,6 +258,18 @@
                   $scope.reloadPage = true;
                 } else {
                   $scope.page = 0;
+                }
+              }
+            }, true);
+
+            $scope.$watch('postData', function(newParams, oldParams) {
+
+              if($scope.passive === 'true') { return; }
+
+              if(!angular.equals(newParams, oldParams)) {
+                if($scope.postData != oldParams){
+                  $scope.postData = newParams;
+                  $scope.reloadPage = true;
                 }
               }
             }, true);
