@@ -37,7 +37,7 @@ class Ticket extends Model
 
     public function getTickets()
     {
-        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+        $query = DB::select(DB::raw("SELECT t.title, t.id, t.time_spend, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
             FROM tickets AS t
             LEFT JOIN (
                 SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
