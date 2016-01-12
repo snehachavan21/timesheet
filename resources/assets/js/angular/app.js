@@ -311,6 +311,23 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/view/:ticketId/discussion', {
+            templateUrl: '/templates/tickets/view-ticket-discussions.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory, $route, commentFactory) {
+                    return {
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus(),
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/my-tickets', {
             templateUrl: '/templates/tickets/my-tickets.html',
             controller: 'ticketController',

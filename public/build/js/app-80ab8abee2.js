@@ -311,6 +311,23 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/view/:ticketId/discussion', {
+            templateUrl: '/templates/tickets/view-ticket-discussions.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(projectFactory, userFactory, ticketFactory, $route, commentFactory) {
+                    return {
+                        projects: projectFactory.getProjectList(),
+                        users: userFactory.getUserList(),
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus(),
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/my-tickets', {
             templateUrl: '/templates/tickets/my-tickets.html',
             controller: 'ticketController',
@@ -789,6 +806,45 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
 ]);
 
 /**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function(commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    commentFactory.getTicketComments = function(ticketId) {
+        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
+    }
+
+    commentFactory.saveTicketConversation = function(conversationData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-ticket-conversation',
+            method: 'POST',
+            data: conversationData
+        });
+    }
+
+    return commentFactory;
+}]);
+
+/**
  * Created by amitav on 12/29/15.
  */
 myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
@@ -1038,43 +1094,71 @@ myApp.factory('ticketFactory', ['$http', function($http) {
     return ticketFactory;
 }])
 
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
+myApp.factory('timeEntry', ['$http', function($http) {
+    var timeEntry = {};
 
-    commentFactory.getProjectComments = function(projectId) {
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    timeEntry.getEntries = function() {
+        return $http.get(baseUrl + 'api/time-report');
     }
 
-    commentFactory.saveComment = function(commentData) {
+    /*timeEntry.getUserList = function() {
+        return $http.get(baseUrl + 'api/get-user-list');
+    }*/
+
+    timeEntry.getSearchResult = function(filterParams) {
         return $http({
             headers: {
                 'Content-Type': 'application/json'
             },
-            url: baseUrl + 'api/save-project-comment',
+            url: baseUrl + 'api/time-report-filter',
             method: 'POST',
-            data: commentData
+            data: filterParams
         });
     }
 
-    commentFactory.getTicketComments = function(ticketId) {
-        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
+    timeEntry.getTimeSheetEntryByDate = function() {
+        return $http.get(baseUrl + 'api/get-timeentry-by-date');
     }
 
-    commentFactory.saveTicketConversation = function(conversationData) {
+    timeEntry.getEntriesForEstimate = function(estimateId) {
+        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
+    }
+
+    timeEntry.getBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-backdate-entries');
+    }
+
+    timeEntry.saveBackDateEntry = function(entryData) {
         return $http({
             headers: {
                 'Content-Type': 'application/json'
             },
-            url: baseUrl + 'api/save-ticket-conversation',
+            url: baseUrl + 'api/allow-backdate-entry',
             method: 'POST',
-            data: conversationData
+            data: entryData
         });
     }
 
-    return commentFactory;
+    timeEntry.getRequestBackDateEntries = function() {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries');
+    }
+
+    timeEntry.getRequestBackDateEntriesById = function(id) {
+        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
+    }
+
+    timeEntry.saveRequestBackDateEntry = function(entryData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/allow-request-backdate-entry',
+            method: 'POST',
+            data: entryData
+        });
+    }
+
+    return timeEntry;
 }]);
 
 myApp.controller('logoutController', ['$scope', 'userFactory',
@@ -1183,72 +1267,5 @@ myApp.factory('userFactory', ['$http', '$cookies',
         return userFactory;
     }
 ]);
-
-myApp.factory('timeEntry', ['$http', function($http) {
-    var timeEntry = {};
-
-    timeEntry.getEntries = function() {
-        return $http.get(baseUrl + 'api/time-report');
-    }
-
-    /*timeEntry.getUserList = function() {
-        return $http.get(baseUrl + 'api/get-user-list');
-    }*/
-
-    timeEntry.getSearchResult = function(filterParams) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/time-report-filter',
-            method: 'POST',
-            data: filterParams
-        });
-    }
-
-    timeEntry.getTimeSheetEntryByDate = function() {
-        return $http.get(baseUrl + 'api/get-timeentry-by-date');
-    }
-
-    timeEntry.getEntriesForEstimate = function(estimateId) {
-        return $http.get(baseUrl + 'api/get-timeentry-for-estimate/' + estimateId);
-    }
-
-    timeEntry.getBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-backdate-entries');
-    }
-
-    timeEntry.saveBackDateEntry = function(entryData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/allow-backdate-entry',
-            method: 'POST',
-            data: entryData
-        });
-    }
-
-    timeEntry.getRequestBackDateEntries = function() {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries');
-    }
-
-    timeEntry.getRequestBackDateEntriesById = function(id) {
-        return $http.get(baseUrl + 'api/get-request-backdate-entries-by-id/' + id);
-    }
-
-    timeEntry.saveRequestBackDateEntry = function(entryData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/allow-request-backdate-entry',
-            method: 'POST',
-            data: entryData
-        });
-    }
-
-    return timeEntry;
-}]);
 
 //# sourceMappingURL=app.js.map

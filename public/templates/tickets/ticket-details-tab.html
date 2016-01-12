@@ -3,11 +3,11 @@
         <!-- Nav tabs -->
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" ng-class="checkActiveLink('/ticket/view/{{ticketNum}}')">
-                <a href="#/ticket/view/{{newTicket.id}}">Ticket</a>
+                <a href="#/ticket/view/{{ticketNum}}">Ticket</a>
             </li>
             
-            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/discussion')">
-                <a href="#/ticket/view/:ticketId/discussion">Ticket discussion</a>
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/{{ticketNum}}/discussion')">
+                <a href="#/ticket/view/{{ticketNum}}/discussion">Ticket discussion</a>
             </li>
 
             <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/time-entries')">
