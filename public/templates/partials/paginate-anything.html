@@ -1,0 +1,53 @@
+<div class="paginate-anything">
+
+
+  <div class="row">
+    <div class="pull-left">
+
+      <ul class="pagination pagination-{{size}} links" ng-if="numPages > 1">
+        <li ng-class="{disabled: page <= 0}"><a href ng-click="gotoPage(page-1)">&laquo;</a></li>
+
+        <li ng-if="linkGroupFirst() > 0"><a href ng-click="gotoPage(0)">1</a></li>
+        <li ng-if="linkGroupFirst() > 1" class="disabled"><a href>&hellip;</a></li>
+
+        <li
+                ng-repeat=
+                        "p in [linkGroupFirst(), linkGroupLast()] | makeRange"
+                ng-class="{active: p === page}"
+                >
+          <a href ng-click="gotoPage(p)">{{p+1}}</a>
+        </li>
+
+        <li ng-if="linkGroupLast() < numPages - 2" class="disabled"><a href>&hellip;</a></li>
+        <li ng-if="isFinite() && linkGroupLast() < numPages - 1"><a href ng-click="gotoPage(numPages-1)">{{numPages}}</a></li>
+
+        <li ng-class="{disabled: page >= numPages - 1}"><a href ng-click="gotoPage(page+1)">&raquo;</a></li>
+      </ul>
+    </div>
+
+    <div class="pull-left pagination-select">
+
+      <div class="hidden per-page " ng-if="perPagePresets.length > 0 && numPages > 1">
+        <select ng-model="$parent.perPage" class="form-control"
+                ng-options="p for p in perPagePresets">
+        </select>
+
+      </div>
+
+      <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                ng-if="perPagePresets.length > 0 && numPages > 1" ng-model="$parent.perPage">
+          {{$parent.perPage}} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><a href>--per page--</a></li>
+          <li ng-repeat="p in perPagePresets"><a href ng-click="$parent.perPage = p">{{p}}</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+
+</div>

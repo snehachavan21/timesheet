@@ -84,3 +84,14 @@
 .conversation-add .ta-scroll-window.form-control {
   min-height: 100px;
 }
+
+.pagination-select {
+  display: inline-block;
+  padding-left: 0px;
+  margin: 23px 0px;
+  border-radius: 3px;
+}
+
+.pagination-select .btn-group {
+  margin: 0 6px;
+}

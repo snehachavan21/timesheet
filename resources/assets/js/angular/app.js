@@ -7,6 +7,7 @@ var myApp = angular.module('myApp', [
     'angular.snackbar',
     'angular-loading-bar',
     'textAngular',
+    'bgf.paginateAnything',
     'cfp.hotkeys'
 ]);
 

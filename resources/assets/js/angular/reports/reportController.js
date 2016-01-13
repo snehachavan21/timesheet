@@ -1,5 +1,17 @@
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory, action) {
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
+
+        $scope.perPage = 5;
+        $scope.page = 0;
+
+        $scope.clientLimit = 250;
+        $scope.postUrl = baseUrl+'api/time-report';
+        $scope.postData = {};
+
+        $scope.$on('pagination:loadStart', function (event, status, config) {
+            $scope.page = event.currentScope.page;
+            $scope.perPage = event.currentScope.perPage;
+        });
 
         /*check if clients are loaded*/
         if (action && action.clients != undefined) {
@@ -9,34 +21,24 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             });
         }
 
-        timeEntry.getEntries().then(function(response) {
-                console.log('time entries', response.data);
-                $scope.timeEntries = response.data;
-                angular.forEach(response.data, function(value, key) {
-                    $scope.totalTime = $scope.totalTime + value.time;
-                });
-                return response;
-            })
-            .then(function() {
-                userFactory.getUserList().then(function(response) {
-                    console.log('user list', response.data);
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.users.push(value);
-                    });
-                });
-            })
-            .then(function() {
-                projectFactory.getProjectList().then(function(response) {
-                    console.log('project list', response.data);
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.projects.push(value);
-                    });
-
-                    $timeout(function() {
-                        $scope.showData = true;
-                    }, 500);
-                });
+        userFactory.getUserList().then(function(response) {
+            console.log('user list', response.data);
+            angular.forEach(response.data, function(value, key) {
+                $scope.users.push(value);
             });
+            //});
+        }).then(function() {
+            projectFactory.getProjectList().then(function(response) {
+                console.log('project list', response.data);
+                angular.forEach(response.data, function(value, key) {
+                    $scope.projects.push(value);
+                });
+
+                $timeout(function() {
+                    $scope.showData = true;
+                }, 500);
+            });
+        });
 
         angular.extend($scope, {
             totalTime: 0,
@@ -67,7 +69,7 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                 if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
                     queryParams.clients = [];
                     angular.forEach($scope.filters.clients, function(value, key) {
-                        queryParams.clients.push(value.name);
+                        queryParams.clients.push(value.id);
                     });
                 }
 
@@ -93,14 +95,7 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                     }
                 }
 
-                timeEntry.getSearchResult(queryParams).then(function(response) {
-                    console.log('search result', response.data);
-                    $scope.timeEntries = response.data;
-                    $scope.totalTime = 0;
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.totalTime = $scope.totalTime + value.time;
-                    });
-                });
+                $scope.postData.filters = angular.copy(queryParams);
             },
             clearFilters: function() {
                 $scope.filters = {};

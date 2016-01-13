@@ -37,7 +37,8 @@ class ManagerController extends Controller
     {
         Excel::create('Timesheet_Report_' . time(), function ($excel) {
             $timeEntryObj = new TimeEntry;
-            $timeEntries = $timeEntryObj->getManagerTrackerReport();
+            $timeEntryQuery = $timeEntryObj->getManagerTrackerReport();
+            $timeEntries = $timeEntryQuery->get();
 
             $data = [];
             foreach ($timeEntries as $entry) {
