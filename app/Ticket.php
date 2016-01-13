@@ -122,12 +122,15 @@ class Ticket extends Model
         return $query;
     }
 
-    public function getTicketTimeEntries()
+    public function getTicketTimeEntries($id)
     {
         $query = DB::table('tickets as t')
+            ->select(['t.*', 'tte.*', 'te.*', 'u.*', 'te.created_at as addedDate'])
             ->join('ticket_time_entries as tte', 'tte.ticket_id', '=', 't.id')
             ->join('time_entries as te', 'tte.time_entry_id', '=', 'te.id')
             ->join('users as u', 'te.user_id', '=', 'u.id')
+            ->where('t.id', $id)
+            ->orderBy('tte.id', 'desc')
             ->get();
 
         return $query;

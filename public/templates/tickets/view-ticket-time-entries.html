@@ -15,9 +15,8 @@
                 <thead>
                     <tr>
                         <td>Title</td>
-                        <td>Project name</td>
-                        <td>Status</td>
-                        <td>Assigned to</td>
+                        <td>Entry by</td>
+                        <td>Entry date</td>
                         <td>Time</td>
                     </tr>
                 </thead>
@@ -25,9 +24,8 @@
                 <tbody>
                     <tr ng-repeat="(key, value) in timeEntries">
                         <td>{{ value.desc }}</td>
-                        <td>{{ value.project_name }}</td>
-                        <td>{{ value.status }}</td>
                         <td>{{ value.name }}</td>
+                        <td>{{ timeAgo(value.addedDate) }}</td>
                         <td>{{ value.time }}</td>
                     </tr>
                 </tbody>
