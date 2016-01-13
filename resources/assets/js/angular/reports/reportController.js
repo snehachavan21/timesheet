@@ -47,7 +47,8 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             users: [],
             projects: [],
             clients: {},
-            dt: new Date()
+            dt: new Date(),
+            csrf: csrf
         });
 
         angular.extend($scope, {

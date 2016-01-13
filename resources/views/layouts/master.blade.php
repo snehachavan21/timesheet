@@ -21,7 +21,10 @@
       font-family: 'Source Sans Pro', sans-serif;
     }
   </style>
-  <script> var baseUrl = "{{url('/')}}/";</script>
+  <script>
+    var baseUrl = "{{url('/')}}/";
+    var csrf = "{{ csrf_token() }}";
+  </script>
 
   @yield('meta_tags')
 </head>
