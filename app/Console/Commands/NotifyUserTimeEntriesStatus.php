@@ -53,7 +53,7 @@ class NotifyUserTimeEntriesStatus extends Command
         $mail->mail([
             'from' => 'amitav.roy@focalworks.in',
             'fromName' => 'Amitav Roy',
-            'to' => 'pruthvi.paghdal@focalworks.in',
+            'to' => 'amitav.roy@focalworks.in',
             'toName' => '',
             'subject' => 'List of Employees forgot to fill time sheet for date : '. $date,
             'mailBody' => view('mails.user-time-entry-status-mail')->with('userData', $userData),
