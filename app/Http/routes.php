@@ -54,7 +54,7 @@ Route::group(['middleware' => 'csrf'], function () {
         });
 
         Route::group(['prefix' => 'api'], function () {
-//            post('time-report', 'ApiController@getFilterReport');
+            post('time-report', 'ApiController@getFilterReport');
             get('get-user_data', 'ApiController@getUserObjById');
             get('get-user-list', 'ApiController@getUserList');
             post('get-user-list-by-role', 'ApiController@getUserListByRole');
@@ -102,10 +102,6 @@ Route::group(['middleware' => 'csrf'], function () {
     Route::resource('clients', 'ClientController');
 
     Route::resource('role', 'RoleController');
-});
-
-Route::group(['prefix' => 'api'], function () {
-    post('time-report', 'ApiController@getFilterReport');
 });
 
 App::bind('App\Services\Interfaces\SendMailInterface', 'App\Services\SESSendMail');

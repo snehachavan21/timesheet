@@ -10,7 +10,7 @@
     <form action="{{postUrl}}" method="post" name="downloadRptForm" id="downloadRptForm">
         <input name="xls" id="xls" value="true" />
         <input name="filters" id="filters" value="true" ng-model="postFormFilters" />
-        <!--<input type="hidden" name="_token" value="{{ csrf_token() }}">-->
+        <input type="hidden" name="_token" value="{{ csrf }}">
     </form>
 </div>
 
