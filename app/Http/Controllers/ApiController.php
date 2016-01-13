@@ -61,14 +61,13 @@ class ApiController extends Controller
             DB::raw("DATE(te.created_at) as createdDate"),
         ];
 
-        \Log::info(print_r($request->all(), true));
         //set filters on query
         $filters = $request->input('filters');
 
         if($request->has('xls')) {
             $filters = (array) json_decode($filters);
         }
-        \Log::info(print_r($filters, true));
+
         if(isset($filters['desc']) && $filters['desc']!="") {
             $timeEntryQuery->where('te.desc', $filters['desc']);
         }
