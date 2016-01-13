@@ -10,13 +10,13 @@
                 <a href="#/ticket/view/{{ticketNum}}/discussion">Ticket discussion</a>
             </li>
 
-            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/time-entries')">
-                <a href="#/ticket/view/:ticketId/time-entries">Ticket time entries</a>
+            <li role="presentation" ng-class="checkActiveLink('/ticket/view/{{ticketNum}}/time-entries')">
+                <a href="#/ticket/view/{{ticketNum}}/time-entries">Ticket time entries</a>
             </li>
 
-            <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/attachments')">
+            <!-- <li role="presentation" ng-class="checkActiveLink('/ticket/view/:ticketId/attachments')">
                 <a href="#/ticket/view/:ticketId/attachments">Ticket attachments</a>
-            </li>
+            </li> -->
         </ul>
     </div>
 </div>

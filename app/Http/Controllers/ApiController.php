@@ -602,4 +602,10 @@ class ApiController extends Controller
 
         return response(['data' => $result], 200);
     }
+
+    public function getTicketTimeEntries($id)
+    {
+        $ticket = new Ticket;
+        return $ticket->getTicketTimeEntries();
+    }
 }

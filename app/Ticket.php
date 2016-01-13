@@ -37,7 +37,7 @@ class Ticket extends Model
 
     public function getTickets()
     {
-        $query = DB::select(DB::raw("SELECT t.title, t.id, t.time_spend, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+        $query = DB::select(DB::raw("SELECT t.title, t.id, t.time_spend, commentData.*, p.name AS project, u.name AS assigned_to, t.type, t.status, t.complete_date
             FROM tickets AS t
             LEFT JOIN (
                 SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
@@ -51,7 +51,7 @@ class Ticket extends Model
 
     public function getMyTickets()
     {
-        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+        $query = DB::select(DB::raw("SELECT t.title, t.id, t.time_spend, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
             FROM tickets AS t
             LEFT JOIN (
               SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
@@ -65,7 +65,7 @@ class Ticket extends Model
 
     public function getTicketsFollowing()
     {
-        $query = DB::select(DB::raw("SELECT t.title, t.id, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
+        $query = DB::select(DB::raw("SELECT t.title, t.id, t.time_spend, commentData.*, p.name AS project, u.name AS assigned_to, t.`type`, t.`status`, t.`complete_date`
             FROM tickets AS t
             LEFT JOIN (
               SELECT cb.*, count(*) AS ccount FROM `commentables` AS cb WHERE cb.`commentable_type` LIKE '%Ticket' GROUP BY cb.`commentable_id`
@@ -117,6 +117,17 @@ class Ticket extends Model
             ->join('comments as c', 'c.id', '=', 'cb.comment_id', 'left')
             ->join('users as u', 'u.id', '=', 'c.user_id', 'left')
             ->orderBy('c.id', 'desc')
+            ->get();
+
+        return $query;
+    }
+
+    public function getTicketTimeEntries()
+    {
+        $query = DB::table('tickets as t')
+            ->join('ticket_time_entries as tte', 'tte.ticket_id', '=', 't.id')
+            ->join('time_entries as te', 'tte.time_entry_id', '=', 'te.id')
+            ->join('users as u', 'te.user_id', '=', 'u.id')
             ->get();
 
         return $query;

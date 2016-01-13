@@ -82,6 +82,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*check if the ticket time entries have loaded*/
+        if (action && action.timeEntries != undefined) {
+            action.timeEntries.success(function(response) {
+                console.log('tickets time entries', response);
+                $scope.timeEntries = response;
+                $scope.showTicketTimeEntries = true;
+                $scope.ticketTotalTime = 0;
+                angular.forEach($scope.timeEntries, function(value, key) {
+                    $scope.ticketTotalTime = $scope.ticketTotalTime + parseFloat(value.time);
+                });
+            });
+        }
+
         /*loading ticket comments*/
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
@@ -113,6 +126,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             ticketStatus: {},
             tickets: {},
             myTickets: {},
+            timeEntries: {},
+            showTicketTimeEntries: false,
             viewMyTickets: false,
             showComments: false,
             viewTickets: true,
