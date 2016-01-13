@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\Inspire::class,
         \App\Console\Commands\DailyDbBackup::class,
         \App\Console\Commands\ClearOldBackdateEntries::class,
+        \App\Console\Commands\NotifyUserTimeEntriesStatus::class
     ];
 
     /**
