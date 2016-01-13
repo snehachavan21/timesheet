@@ -27,6 +27,7 @@
                     <th>Assigned To</th>
                     <th>Type</th>
                     <th>Status</th>
+                    <th>Time spend</th>
                     <th>Target</th>
                 </tr>
             </thead>
@@ -41,6 +42,7 @@
                     <td>{{ticket.assigned_to}}</td>
                     <td>{{ticket.type | ucfirst }}</td>
                     <td>{{ticket.status}}</td>
+                    <td>{{ticket.time_spend}}</td>
                     <td>{{momentTime(ticket.complete_date, "Do MMM")}}</td>
                 </tr>
             </tbody>

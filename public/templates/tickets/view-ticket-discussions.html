@@ -1,0 +1,35 @@
+<div ng-include="ticketDetailsTab" scope="" onload=""></div>
+
+<div ng-show="showTicketForm">
+
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>Discussions: #{{ newTicket.id }}:{{newTicket.title}}</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12" ng-show="showComments">
+            <h4>Conversations</h4>
+            <div class="conversation-add">
+                <div text-angular ng-model="newConversation" 
+                ta-toolbar="[]"
+                style="font-size: 1em"></div>
+            </div>
+            <br>
+            <button class="btn btn-primary" ng-click="saveNewConversation()">Add</button>
+
+            <hr>
+            <h5>Previous comments</h5>
+            <div ng-repeat="(key, value) in ticketComments" class="panel panel-default">
+                <div class="panel-body comment">
+                    <div ng-bind-html="value.comment | unsafe"></div>
+                    <div class="comment-meta-data">
+                        By <strong>{{value.name}}</strong> {{ timeAgo(value.created_at) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

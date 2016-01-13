@@ -107,6 +107,7 @@ class ApiController extends Controller
             $totalCount = $aggregateResult->totalCount;
             $totalTime = $aggregateResult->totalTime;
         }
+        
 
         $timeEntryQuery->select($select);
 
@@ -115,11 +116,11 @@ class ApiController extends Controller
 
         $timeEntryQuery->skip($range[0]);
 
-        $limit = ($range[0] == 0)?$range[1]:($range[1]-$range[0]);
+        $limit = (0 == $range[0]) ? $range[1] : ($range[1] - $range[0]);
 
         $timeEntryQuery->limit($limit);
 
-        return response(['data' => $timeEntryQuery->get(), 'totalTime' =>  $totalTime])
+        return response(['data' => $timeEntryQuery->get(), 'totalTime' => $totalTime])
             ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
     }
 
@@ -709,5 +710,11 @@ dd();
         $result = $ticket->getTicketsFollowing();
 
         return response(['data' => $result], 200);
+    }
+
+    public function getTicketTimeEntries($id)
+    {
+        $ticket = new Ticket;
+        return $ticket->getTicketTimeEntries($id);
     }
 }
