@@ -99,6 +99,7 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                 $scope.postFormFilters = angular.toJson($scope.postData.filters); // as download does not require "xls" param
             },
             downloadReport:function(){
+                console.log('report');
                 $scope.postFormFilters = angular.toJson($scope.postData.filters);
                 $('#downloadRptForm').submit();
             },

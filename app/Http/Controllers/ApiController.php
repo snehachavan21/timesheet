@@ -127,12 +127,7 @@ class ApiController extends Controller
     private function getFilteredReport($timeEntries)
     {
         $filename = 'Timesheet_Report_' . time();
-        header("Content-Type:   application/vnd.ms-excel; charset=utf-8");
-        header("Content-type:   application/x-msexcel; charset=utf-8");
-        header("Content-Disposition: attachment; filename=$filename.xls");
-        header("Cache-Control: public");
-        header("Content-Description: File Transfer");
-        header("Content-Transfer-Encoding: binary");
+
         Excel::create($filename, function ($excel) use ($timeEntries) {
 
             foreach ($timeEntries as $entry) {
@@ -151,8 +146,7 @@ class ApiController extends Controller
                 $sheet->fromArray($data);
             });
         })->export('xls');
-dd();
-        return;
+        exit;
     }
 
     /**
