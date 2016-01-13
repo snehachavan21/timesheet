@@ -82,6 +82,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        /*check if the ticket time entries have loaded*/
+        if (action && action.timeEntries != undefined) {
+            action.timeEntries.success(function(response) {
+                console.log('tickets time entries', response);
+                $scope.timeEntries = response;
+                $scope.showTicketTimeEntries = true;
+                $scope.ticketTotalTime = 0;
+                angular.forEach($scope.timeEntries, function(value, key) {
+                    $scope.ticketTotalTime = $scope.ticketTotalTime + parseFloat(value.time);
+                });
+            });
+        }
+
         /*loading ticket comments*/
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
@@ -89,6 +102,15 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                 $scope.ticketComments = response.data;
                 $scope.showComments = true;
             });
+        }
+
+        /**
+         * This check is required to get the active link on the tab 
+         * because ticket id is coming after the $http request
+         * and so the route function does not get ticket id
+         */
+        if ($routeParams.ticketId != undefined) {
+            $scope.ticketNum = $routeParams.ticketId;
         }
 
         /*model*/
@@ -104,6 +126,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             ticketStatus: {},
             tickets: {},
             myTickets: {},
+            timeEntries: {},
+            showTicketTimeEntries: false,
             viewMyTickets: false,
             showComments: false,
             viewTickets: true,

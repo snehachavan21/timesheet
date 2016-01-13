@@ -50,28 +50,28 @@ class ApiController extends Controller
         //set filters on query
         $filters = $request->input('filters');
 
-        if(isset($filters['desc']) && $filters['desc']!="") {
+        if (isset($filters['desc']) && "" != $filters['desc']) {
             $timeEntryQuery->where('te.desc', $filters['desc']);
         }
 
-        if(isset($filters['users']) && !empty($filters['users'])) {
+        if (isset($filters['users']) && !empty($filters['users'])) {
             $timeEntryQuery->whereIn('u.id', $filters['users']);
         }
 
-        if(isset($filters['clients']) && !empty($filters['clients'])) {
+        if (isset($filters['clients']) && !empty($filters['clients'])) {
             $timeEntryQuery->whereIn('c.id', $filters['clients']);
         }
 
-        if(isset($filters['projects']) && !empty($filters['projects'])) {
+        if (isset($filters['projects']) && !empty($filters['projects'])) {
             $timeEntryQuery->whereIn('p.id', $filters['projects']);
         }
 
-        if(isset($filters['startDate']) && $filters['startDate']!="") {
-            $timeEntryQuery->whereDate('te.created_at','>=', date('Y-m-d', strtotime($filters['startDate'])));
+        if (isset($filters['startDate']) && "" != $filters['startDate']) {
+            $timeEntryQuery->whereDate('te.created_at', '>=', date('Y-m-d', strtotime($filters['startDate'])));
         }
 
-        if(isset($filters['endDate']) && $filters['endDate']!="") {
-            $timeEntryQuery->whereDate('te.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
+        if (isset($filters['endDate']) && "" != $filters['endDate']) {
+            $timeEntryQuery->whereDate('te.created_at', '<=', date('Y-m-d', strtotime($filters['endDate'])));
         }
 
         //get total count and time sum
@@ -79,7 +79,7 @@ class ApiController extends Controller
             ->selectRaw('count(*) AS totalCount, sum(time) as totalTime')
             ->mergeBindings($timeEntryQuery)->first();
 
-        if($aggregateResult) {
+        if ($aggregateResult) {
             $totalCount = $aggregateResult->totalCount;
             $totalTime = $aggregateResult->totalTime;
         }
@@ -104,11 +104,11 @@ class ApiController extends Controller
 
         $timeEntryQuery->skip($range[0]);
 
-        $limit = ($range[0] == 0)?$range[1]:($range[1]-$range[0]);
+        $limit = (0 == $range[0]) ? $range[1] : ($range[1] - $range[0]);
 
         $timeEntryQuery->limit($limit);
 
-        return response(['data' => $timeEntryQuery->get(), 'totalTime' =>  $totalTime])
+        return response(['data' => $timeEntryQuery->get(), 'totalTime' => $totalTime])
             ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
     }
 
@@ -667,5 +667,11 @@ class ApiController extends Controller
         $result = $ticket->getTicketsFollowing();
 
         return response(['data' => $result], 200);
+    }
+
+    public function getTicketTimeEntries($id)
+    {
+        $ticket = new Ticket;
+        return $ticket->getTicketTimeEntries($id);
     }
 }

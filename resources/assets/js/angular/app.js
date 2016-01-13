@@ -73,6 +73,7 @@ myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
             ticketsTab: '/templates/tickets/ticket-tab.html',
+            ticketDetailsTab: '/templates/tickets/ticket-details-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
@@ -306,6 +307,32 @@ myApp.config(['$routeProvider', '$locationProvider',
                         status: ticketFactory.getTickeStatus(),
                         ticket: ticketFactory.getTicketById($route.current.params.ticketId),
                         comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId/discussion', {
+            templateUrl: '/templates/tickets/view-ticket-discussions.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route, commentFactory) {
+                    return {
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId/time-entries', {
+            templateUrl: '/templates/tickets/view-ticket-time-entries.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route) {
+                    return {
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        timeEntries: ticketFactory.getTicketTimeEntries($route.current.params.ticketId)
                     }
                 }
             }

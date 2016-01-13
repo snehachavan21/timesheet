@@ -6,7 +6,9 @@ var myApp = angular.module('myApp', [
     'chart.js',
     'angular.snackbar',
     'angular-loading-bar',
-    'textAngular'
+    'textAngular',
+    'bgf.paginateAnything',
+    'cfp.hotkeys'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
@@ -25,18 +27,18 @@ myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
                 if (next.$$route.roles !== undefined) {
                     var access = false;
                     var userObj = $cookies.getObject('userObj');
-                    console.log('userObj', userObj);
+                    /*console.log('userObj', userObj);*/
                     angular.forEach(next.$$route.roles, function(roleValue, roleKey) {
-                        console.log(roleValue);
+                        /*console.log(roleValue);*/
                         angular.forEach(userObj.roles, function(userValue, userKey) {
-                            console.log(userValue);
+                            /*console.log(userValue);*/
                             if (roleValue == userValue.roleName) {
                                 access = true;
                             }
                         });
                     });
 
-                    console.log(access);
+                    /*console.log(access);*/
                     if (access == false) {
                         $location.path('access-denied');
                     }
@@ -49,11 +51,29 @@ myApp.filter('unsafe', function($sce) {
     return $sce.trustAsHtml;
 });
 
-myApp.controller('globalController', ['$scope', '$location',
-    function($scope, $location) {
+myApp.filter('ucfirst', function() {
+    return function(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+});
+
+myApp.controller('globalController', ['$scope', '$location', 'hotkeys',
+    function($scope, $location, hotkeys) {
+
+        /*hotkeys.add({
+            combo: 'ctrl+t+e',
+            description: 'This one goes to 11',
+            callback: function() {
+                $location.path('ticket/my-tickets');
+                console.log(123);
+            }
+        });*/
+
         angular.extend($scope, {
             reportTabUrl: '/templates/manager/reportTabs.html',
             singleProjectTab: '/templates/projects/singleProjectTab.html',
+            ticketsTab: '/templates/tickets/ticket-tab.html',
+            ticketDetailsTab: '/templates/tickets/ticket-details-tab.html',
             checkActiveLink: function(currLink) {
                 if ($location.path() == currLink) {
                     return 'active';
@@ -241,7 +261,7 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
-        /*Ticket section*/
+        /*Ticket section starts*/
         $routeProvider.when('/ticket/list', {
             templateUrl: '/templates/tickets/list-ticket.html',
             controller: 'ticketController',
@@ -252,7 +272,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                         tickets: ticketFactory.getAllTickets(),
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -267,7 +288,8 @@ myApp.config(['$routeProvider', '$locationProvider',
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
-                        type: ticketFactory.getTickeType()
+                        type: ticketFactory.getTickeType(),
+                        status: ticketFactory.getTickeStatus()
                     }
                 }
             }
@@ -277,12 +299,40 @@ myApp.config(['$routeProvider', '$locationProvider',
             templateUrl: '/templates/tickets/view-ticket.html',
             controller: 'ticketController',
             resolve: {
-                action: function(projectFactory, userFactory, ticketFactory, $route) {
+                action: function(projectFactory, userFactory, ticketFactory, $route, commentFactory) {
                     return {
                         projects: projectFactory.getProjectList(),
                         users: userFactory.getUserList(),
                         type: ticketFactory.getTickeType(),
-                        ticket: ticketFactory.getTicketById($route.current.params.ticketId)
+                        status: ticketFactory.getTickeStatus(),
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId/discussion', {
+            templateUrl: '/templates/tickets/view-ticket-discussions.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route, commentFactory) {
+                    return {
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId/time-entries', {
+            templateUrl: '/templates/tickets/view-ticket-time-entries.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route) {
+                    return {
+                        ticket: ticketFactory.getTicketById($route.current.params.ticketId),
+                        timeEntries: ticketFactory.getTicketTimeEntries($route.current.params.ticketId)
                     }
                 }
             }
@@ -295,6 +345,18 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function(ticketFactory) {
                     return {
                         myTickets: ticketFactory.getMyTickets(),
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/tickets-following', {
+            templateUrl: '/templates/tickets/tickets-following.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory) {
+                    return {
+                        ticketsFollowing: ticketFactory.getTicketsFollowing(),
                     }
                 }
             }
@@ -383,11 +445,10 @@ myApp.factory('commentFactory', ['$http', function($http) {
     var commentFactory = {};
 
     commentFactory.getProjectComments = function(projectId) {
-        console.log('Project id', projectId);
         return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
     }
 
-    commentFactory.saveComment = function (commentData) {
+    commentFactory.saveComment = function(commentData) {
         return $http({
             headers: {
                 'Content-Type': 'application/json'
@@ -398,8 +459,150 @@ myApp.factory('commentFactory', ['$http', function($http) {
         });
     }
 
+    commentFactory.getTicketComments = function(ticketId) {
+        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
+    }
+
+    commentFactory.saveTicketConversation = function(conversationData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-ticket-conversation',
+            method: 'POST',
+            data: conversationData
+        });
+    }
+
     return commentFactory;
 }]);
+
+myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
+    function($scope, timeEntry, $parse) {
+        timeEntry.getTimeSheetEntryByDate().success(function(response) {
+            $scope.timeEntryOverview = response;
+        });
+
+        angular.extend($scope, {
+            graphLabels: {}
+        });
+
+        angular.extend($scope, {
+            changeTag: function(url) {
+                $scope.tabUrl = url;
+            }
+        });
+
+        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
+        $scope.data = [300, 500, 100];
+    }
+]);
+
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
+
+        $scope.perPage = 5;
+        $scope.page = 0;
+
+        $scope.clientLimit = 250;
+        $scope.postUrl = baseUrl+'api/time-report';
+        $scope.postData = {};
+
+        $scope.$on('pagination:loadStart', function (event, status, config) {
+            $scope.page = event.currentScope.page;
+            $scope.perPage = event.currentScope.perPage;
+        });
+
+        /*check if clients are loaded*/
+        if (action && action.clients != undefined) {
+            action.clients.success(function(response) {
+                console.log('all clients', response);
+                $scope.clients = response;
+            });
+        }
+
+        userFactory.getUserList().then(function(response) {
+            console.log('user list', response.data);
+            angular.forEach(response.data, function(value, key) {
+                $scope.users.push(value);
+            });
+            //});
+        }).then(function() {
+            projectFactory.getProjectList().then(function(response) {
+                console.log('project list', response.data);
+                angular.forEach(response.data, function(value, key) {
+                    $scope.projects.push(value);
+                });
+
+                $timeout(function() {
+                    $scope.showData = true;
+                }, 500);
+            });
+        });
+
+        angular.extend($scope, {
+            totalTime: 0,
+            showData: false,
+            filters: {},
+            users: [],
+            projects: [],
+            clients: {},
+            dt: new Date()
+        });
+
+        angular.extend($scope, {
+            filterTime: function(filterTimeFrm) {
+                console.log($scope.filters);
+                var queryParams = {};
+
+                if ($scope.filters.desc != "") {
+                    queryParams.desc = $scope.filters.desc;
+                }
+
+                if ($scope.filters.users !== undefined && $scope.filters.users.length > 0) {
+                    queryParams.users = [];
+                    angular.forEach($scope.filters.users, function(value, key) {
+                        queryParams.users.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
+                    queryParams.clients = [];
+                    angular.forEach($scope.filters.clients, function(value, key) {
+                        queryParams.clients.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
+                    queryParams.projects = [];
+                    angular.forEach($scope.filters.project, function(value, key) {
+                        queryParams.projects.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.startDate !== undefined) {
+                    queryParams.startDate = $scope.filters.startDate;
+                }
+
+                if ($scope.filters.endDate !== undefined) {
+                    queryParams.endDate = $scope.filters.endDate;
+                    var startDateOfYear = moment(queryParams.startDate).dayOfYear();
+                    var endDateOfYear = moment(queryParams.endDate).dayOfYear();
+
+                    if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
+                        alert('End date is before start date.');
+                        return false;
+                    }
+                }
+
+                $scope.postData.filters = angular.copy(queryParams);
+            },
+            clearFilters: function() {
+                $scope.filters = {};
+            }
+        });
+    }
+]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
     var estimateFactory = {};
@@ -646,143 +849,20 @@ myApp.factory('projectFactory', ['$http', function($http) {
     return projectFactory;
 }]);
 
-myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
-    function($scope, timeEntry, $parse) {
-        timeEntry.getTimeSheetEntryByDate().success(function(response) {
-            $scope.timeEntryOverview = response;
-        });
-
-        angular.extend($scope, {
-            graphLabels: {}
-        });
-
-        angular.extend($scope, {
-            changeTag: function(url) {
-                $scope.tabUrl = url;
-            }
-        });
-
-        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
-        $scope.data = [300, 500, 100];
-    }
-]);
-
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory, action) {
-
-        /*check if clients are loaded*/
-        if (action && action.clients != undefined) {
-            action.clients.success(function(response) {
-                console.log('all clients', response);
-                $scope.clients = response;
-            });
-        }
-
-        timeEntry.getEntries().then(function(response) {
-                console.log('time entries', response.data);
-                $scope.timeEntries = response.data;
-                angular.forEach(response.data, function(value, key) {
-                    $scope.totalTime = $scope.totalTime + value.time;
-                });
-                return response;
-            })
-            .then(function() {
-                userFactory.getUserList().then(function(response) {
-                    console.log('user list', response.data);
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.users.push(value);
-                    });
-                });
-            })
-            .then(function() {
-                projectFactory.getProjectList().then(function(response) {
-                    console.log('project list', response.data);
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.projects.push(value);
-                    });
-
-                    $timeout(function() {
-                        $scope.showData = true;
-                    }, 500);
-                });
-            });
-
-        angular.extend($scope, {
-            totalTime: 0,
-            showData: false,
-            filters: {},
-            users: [],
-            projects: [],
-            clients: {},
-            dt: new Date()
-        });
-
-        angular.extend($scope, {
-            filterTime: function(filterTimeFrm) {
-                console.log($scope.filters);
-                var queryParams = {};
-
-                if ($scope.filters.desc != "") {
-                    queryParams.desc = $scope.filters.desc;
-                }
-
-                if ($scope.filters.users !== undefined && $scope.filters.users.length > 0) {
-                    queryParams.users = [];
-                    angular.forEach($scope.filters.users, function(value, key) {
-                        queryParams.users.push(value.id);
-                    });
-                }
-
-                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
-                    queryParams.clients = [];
-                    angular.forEach($scope.filters.clients, function(value, key) {
-                        queryParams.clients.push(value.name);
-                    });
-                }
-
-                if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
-                    queryParams.projects = [];
-                    angular.forEach($scope.filters.project, function(value, key) {
-                        queryParams.projects.push(value.id);
-                    });
-                }
-
-                if ($scope.filters.startDate !== undefined) {
-                    queryParams.startDate = $scope.filters.startDate;
-                }
-
-                if ($scope.filters.endDate !== undefined) {
-                    queryParams.endDate = $scope.filters.endDate;
-                    var startDateOfYear = moment(queryParams.startDate).dayOfYear();
-                    var endDateOfYear = moment(queryParams.endDate).dayOfYear();
-
-                    if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
-                        alert('End date is before start date.');
-                        return false;
-                    }
-                }
-
-                timeEntry.getSearchResult(queryParams).then(function(response) {
-                    console.log('search result', response.data);
-                    $scope.timeEntries = response.data;
-                    $scope.totalTime = 0;
-                    angular.forEach(response.data, function(value, key) {
-                        $scope.totalTime = $scope.totalTime + value.time;
-                    });
-                });
-            },
-            clearFilters: function() {
-                $scope.filters = {};
-            }
-        });
-    }
-]);
-
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+
+        /*Adding hotkeys*/
+        hotkeys.add({
+            combo: 'ctrl+s+d',
+            description: 'This one goes to 11',
+            callback: function() {
+                $scope.saveNewConversation();
+            }
+        });
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -806,6 +886,14 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             action.type.success(function(response) {
                 console.log('all type', response);
                 $scope.ticketType = response;
+            });
+        }
+
+        /*load ticket status*/
+        if (action && action.status != undefined) {
+            action.status.success(function(response) {
+                console.log('all status', response);
+                $scope.ticketStatus = response;
             });
         }
 
@@ -837,19 +925,65 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             });
         }
 
+        if (action && action.ticketsFollowing != undefined) {
+            action.ticketsFollowing.success(function(response) {
+                console.log('tickets following', response);
+                $scope.ticketsFollowing = response.data;
+                $scope.viewTicketsFollowing = true;
+            });
+        }
+
+        /*check if the ticket time entries have loaded*/
+        if (action && action.timeEntries != undefined) {
+            action.timeEntries.success(function(response) {
+                console.log('tickets time entries', response);
+                $scope.timeEntries = response;
+                $scope.showTicketTimeEntries = true;
+                $scope.ticketTotalTime = 0;
+                angular.forEach($scope.timeEntries, function(value, key) {
+                    $scope.ticketTotalTime = $scope.ticketTotalTime + parseFloat(value.time);
+                });
+            });
+        }
+
+        /*loading ticket comments*/
+        if (action && action.comments != undefined) {
+            action.comments.success(function(response) {
+                console.log('ticket comments', response);
+                $scope.ticketComments = response.data;
+                $scope.showComments = true;
+            });
+        }
+
+        /**
+         * This check is required to get the active link on the tab 
+         * because ticket id is coming after the $http request
+         * and so the route function does not get ticket id
+         */
+        if ($routeParams.ticketId != undefined) {
+            $scope.ticketNum = $routeParams.ticketId;
+        }
+
         /*model*/
         angular.extend($scope, {
             formUrl: baseUrl + 'templates/tickets/ticket-form.html',
             showTicketForm: false,
             newTicket: {
-                type: 'none'
+                type: 'none',
+                status: 'none'
             },
             projects: {},
             ticketType: {},
+            ticketStatus: {},
             tickets: {},
             myTickets: {},
+            timeEntries: {},
+            showTicketTimeEntries: false,
             viewMyTickets: false,
-            viewTickets: true
+            showComments: false,
+            viewTickets: true,
+            viewTicketsFollowing: false,
+            newConversation: ""
         });
 
         /*methods*/
@@ -864,7 +998,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         project_id: $scope.newTicket.project[0].id,
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
-                        type: $scope.newTicket.type
+                        type: $scope.newTicket.type,
+                        status: $scope.newTicket.status
                     };
 
                     /*Adding follower ids*/
@@ -889,6 +1024,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
                         type: $scope.newTicket.type,
+                        status: $scope.newTicket.status,
                         id: $routeParams.ticketId
                     };
 
@@ -902,6 +1038,23 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         $location.path('/ticket/list');
                         snackbar.create("Ticket updated.", 1000);
                     });
+                }
+            },
+            saveNewConversation: function() {
+                if ($scope.newConversation != "") {
+                    var data = {
+                        comment: $scope.newConversation,
+                        ticketId: $routeParams.ticketId
+                    };
+
+                    commentFactory.saveTicketConversation(data).success(function(response) {
+                        console.log('Conversation saved');
+                        console.log(response);
+                        $scope.newConversation = "";
+                        $scope.ticketComments = response.data;
+                    });
+                } else {
+                    snackbar.create("Add some text before saving the discussion.", 1000);
                 }
             }
         });
@@ -946,8 +1099,20 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-ticket-types');
     }
 
+    ticketFactory.getTickeStatus = function() {
+        return $http.get(baseUrl + 'api/get-ticket-status');
+    }
+
     ticketFactory.getMyTickets = function() {
         return $http.get(baseUrl + 'api/get-my-tickets');
+    }
+
+    ticketFactory.getTicketsFollowing = function() {
+        return $http.get(baseUrl + 'api/get-tickets-following');
+    }
+
+    ticketFactory.getTicketTimeEntries = function(id) {
+        return $http.get(baseUrl + 'api/get-tickets-time-entries/' + id);
     }
 
     return ticketFactory;

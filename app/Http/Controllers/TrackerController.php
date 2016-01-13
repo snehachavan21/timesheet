@@ -63,7 +63,6 @@ class TrackerController extends Controller
 
     public function saveTrackerEntry(Request $request)
     {
-        // return $request->all();
         $validator = Validator::make($request->all(), [
             'desc' => 'required|min:5',
             'time' => 'required|numeric',
@@ -79,6 +78,10 @@ class TrackerController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        // check if the time entry is related to a ticket
+        $timeEntry = new TimeEntry;
+        $timeEntryForTicket = $timeEntry->timeEntryForTicket($request->input('desc'));
 
         try {
             DB::beginTransaction();
@@ -116,6 +119,7 @@ class TrackerController extends Controller
                 ]);
             }
 
+            // insert time if there is an estimate for the time entry
             if ($request->input('estimate_id') && $request->input('estimate_id') != 0) {
                 DB::table('time_entry_estimates')->insert([
                     'time_entry_id' => $entryId,
@@ -127,6 +131,23 @@ class TrackerController extends Controller
                 DB::update("UPDATE estimates SET hours_consumed = hours_consumed + :hours WHERE id = :id", [
                     'hours' => $request->input('time'),
                     'id' => $request->input('estimate_id'),
+                ]);
+            }
+
+            // if the time entry is related to a valid ticket
+            if ($timeEntryForTicket) {
+
+                // make the pivot table entry
+                DB::table('ticket_time_entries')->insert([
+                    'ticket_id' => $timeEntryForTicket->id,
+                    'time_entry_id' => $entryId,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                DB::update("UPDATE tickets SET time_spend = time_spend + :hours WHERE id = :id", [
+                    'hours' => $request->input('time'),
+                    'id' => $timeEntryForTicket->id,
                 ]);
             }
 
@@ -156,6 +177,27 @@ class TrackerController extends Controller
                 'hours' => $entry->time,
                 'id' => $estId,
             ]);
+        }
+
+        $timeEntry = new TimeEntry;
+        $timeEntryForTicket = $timeEntry->timeEntryForTicket($entry->desc);
+
+        // if ticket reference for time entry exist
+        // subtract the amount from the ticket count
+        if ($timeEntryForTicket) {
+            $entryRow = DB::select(DB::raw("SELECT te.time as time
+                FROM `ticket_time_entries` AS tte
+                LEFT JOIN `time_entries` AS te ON te.id = tte.`time_entry_id`
+                WHERE tte.`time_entry_id` = :timeEntryId"), ['timeEntryId' => $trackerId]);
+
+            $timeToSub = $entryRow[0]->time;
+
+            DB::update("UPDATE tickets SET time_spend = time_spend - :time WHERE id = :id", [
+                'time' => $timeToSub,
+                'id' => $timeEntryForTicket->id,
+            ]);
+
+            DB::table('ticket_time_entries')->where('time_entry_id', $trackerId)->delete();
         }
 
         $entry->delete();

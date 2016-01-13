@@ -1,0 +1,36 @@
+<div ng-include="ticketDetailsTab" scope="" onload=""></div>
+
+<div ng-show="showTicketTimeEntries">
+
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>Time entries: #{{ newTicket.id }}:{{newTicket.title}}</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <h4>Total time: {{ticketTotalTime}}</h4>
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                    <tr>
+                        <td>Title</td>
+                        <td>Entry by</td>
+                        <td>Entry date</td>
+                        <td>Time</td>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr ng-repeat="(key, value) in timeEntries">
+                        <td>{{ value.desc }}</td>
+                        <td>{{ value.name }}</td>
+                        <td>{{ timeAgo(value.addedDate) }}</td>
+                        <td>{{ value.time }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
