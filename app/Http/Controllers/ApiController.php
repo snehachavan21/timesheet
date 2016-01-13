@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ApiController extends Controller
 {
@@ -43,13 +44,31 @@ class ApiController extends Controller
     public function getFilterReport(Request $request)
     {
         $timeEntryObj = new TimeEntry;
-        $timeEntryQuery = $timeEntryObj->getManagerTrackerReport();
+        $timeEntryQuery = $timeEntryObj->getTimerTrackerReport();
         $totalTime = 0;
         $totalCount = 0;
 
+        //used select field here as we are using same query to get count and time sum
+        //set select fields for listing
+        $select = [
+            'te.created_at as created_at',
+            'te.desc as description',
+            'te.time as time',
+            'u.name as username',
+            'p.name as projectName',
+            'c.name as clientName',
+            DB::raw("GROUP_CONCAT(t.name) as tags"),
+            DB::raw("DATE(te.created_at) as createdDate"),
+        ];
+
+        \Log::info(print_r($request->all(), true));
         //set filters on query
         $filters = $request->input('filters');
 
+        if($request->has('xls')) {
+            $filters = (array) json_decode($filters);
+        }
+        \Log::info(print_r($filters, true));
         if(isset($filters['desc']) && $filters['desc']!="") {
             $timeEntryQuery->where('te.desc', $filters['desc']);
         }
@@ -74,6 +93,11 @@ class ApiController extends Controller
             $timeEntryQuery->whereDate('te.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
         }
 
+        if($request->input('xls')) {
+            $timeEntryQuery->select($select);
+            $this->getFilteredReport($timeEntryQuery->get());
+        }
+
         //get total count and time sum
         $aggregateResult = \DB::table(\DB::raw(' ( ' . $timeEntryQuery->select('time')->toSql() . ' ) AS counted '))
             ->selectRaw('count(*) AS totalCount, sum(time) as totalTime')
@@ -83,19 +107,6 @@ class ApiController extends Controller
             $totalCount = $aggregateResult->totalCount;
             $totalTime = $aggregateResult->totalTime;
         }
-
-        //used select field here as we are using same query to get count and time sum
-        //set select fields for listing
-        $select = [
-            'te.created_at as created_at',
-            'te.desc as description',
-            'te.time as time',
-            'u.name as username',
-            'p.name as projectName',
-            'c.name as clientName',
-            DB::raw("GROUP_CONCAT(t.name) as tags"),
-            DB::raw("DATE(te.created_at) as createdDate"),
-        ];
 
         $timeEntryQuery->select($select);
 
@@ -110,6 +121,37 @@ class ApiController extends Controller
 
         return response(['data' => $timeEntryQuery->get(), 'totalTime' =>  $totalTime])
             ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
+    }
+
+    private function getFilteredReport($timeEntries)
+    {
+        $filename = 'Timesheet_Report_' . time();
+        header("Content-Type:   application/vnd.ms-excel; charset=utf-8");
+        header("Content-type:   application/x-msexcel; charset=utf-8");
+        header("Content-Disposition: attachment; filename=$filename.xls");
+        header("Cache-Control: public");
+        header("Content-Description: File Transfer");
+        header("Content-Transfer-Encoding: binary");
+        Excel::create($filename, function ($excel) use ($timeEntries) {
+
+            foreach ($timeEntries as $entry) {
+                $data[] = [
+                    'date' => Carbon::parse($entry->created_at)->toDateString(),
+                    'description' => $entry->description,
+                    'time' => $entry->time,
+                    'username' => $entry->username,
+                    'projectName' => $entry->projectName,
+                    'clientName' => $entry->clientName,
+                    'tags' => $entry->tags,
+                ];
+            }
+
+            $excel->sheet('Sheet 1', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+            });
+        })->export('xls');
+dd();
+        return;
     }
 
     /**

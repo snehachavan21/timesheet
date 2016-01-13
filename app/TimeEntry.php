@@ -50,6 +50,20 @@ class TimeEntry extends Model
         return $query;
     }
 
+    public function getTimerTrackerReport()
+    {
+        $query = DB::table('time_entries as te')
+            ->join('users as u', 'u.id', '=', 'te.user_id', 'left')
+            ->join('projects as p', 'p.id', '=', 'te.project_id', 'left')
+            ->join('clients as c', 'c.id', '=', 'p.client_id', 'left')
+            ->join('taggables as tg', 'tg.taggable_id', '=', 'te.id', 'left')
+            ->join('tags as t', 't.id', '=', 'tg.tag_id', 'left')
+            ->groupBy('te.id')
+            ->orderBy('te.created_at', 'desc');
+
+        return $query;
+    }
+
     public function getProjectWiseReport($sdate, $edate)
     {
         $select = [

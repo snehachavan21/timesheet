@@ -1,7 +1,7 @@
 myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
     function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
 
-        $scope.perPage = 5;
+        $scope.perPage = 100;
         $scope.page = 0;
 
         $scope.clientLimit = 250;
@@ -96,6 +96,11 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                 }
 
                 $scope.postData.filters = angular.copy(queryParams);
+                $scope.postFormFilters = angular.toJson($scope.postData.filters); // as download does not require "xls" param
+            },
+            downloadReport:function(){
+                $scope.postFormFilters = angular.toJson($scope.postData.filters);
+                $('#downloadRptForm').submit();
             },
             clearFilters: function() {
                 $scope.filters = {};
