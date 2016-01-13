@@ -169,6 +169,12 @@ class TimeEntry extends Model
         $query = DB::table('users')
             ->whereRaw(' id not in(select user_id from time_entries
             where DATE(created_at) = DATE( DATE_SUB( NOW() , INTERVAL 1 DAY )) order by `created_at` desc)')
+            ->whereNotIn('email',[
+                'philips.mathew@focalworks.in',
+                'samir.balaganur@focalworks.in',
+                'amitav.roy@focalworks.in',
+                'ronnie@focalworks.in'
+            ])
             ->get();
 
         return $query;
