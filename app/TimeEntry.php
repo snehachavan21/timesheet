@@ -36,9 +36,10 @@ class TimeEntry extends Model
         return $this->morphToMany('App\Tag', 'taggable');
     }
 
-    public function getTotalForReport($subQuery) {
+    public function getTotalForReport($subQuery)
+    {
         $subQuery->select(['time']);
-        \Log::info(print_r($subQuery->toSql(), 1));
+        // \Log::info(print_r($subQuery->toSql(), 1));
         $query = Model::selectRaw('count(*) AS totalCount, sum(time) as totalTime')
             ->from(\DB::raw(' ( ' . $subQuery->toSql() . ' ) AS counted '));
         return $query;
@@ -47,14 +48,20 @@ class TimeEntry extends Model
     public function getManagerTrackerReport()
     {
         $query = DB::table('time_entries as te')
+            ->select(['u.*', 'p.*', 'c.*', 'tg.*', 't.*', 'u.name as username',
+                'p.name as projectName', 'c.name as clientName',
+                DB::raw("GROUP_CONCAT(t.name) as tags"), 'te.desc as desc',
+                'te.time as time', 'te.created_at as createdDate'])
+
             ->join('users as u', 'u.id', '=', 'te.user_id', 'left')
             ->join('projects as p', 'p.id', '=', 'te.project_id', 'left')
             ->join('clients as c', 'c.id', '=', 'p.client_id', 'left')
             ->join('taggables as tg', 'tg.taggable_id', '=', 'te.id', 'left')
             ->join('tags as t', 't.id', '=', 'tg.tag_id', 'left')
             ->groupBy('te.id')
-            ->orderBy('te.created_at', 'desc');
+            ->orderBy('createdDate', 'desc');
 
+        // \Log::info(print_r($query->toSql(), 1));
         return $query;
     }
 
