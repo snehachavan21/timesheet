@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Client;
 use App\Comment;
 use App\Estimate;
+use App\Jobs\TicketCreatedNotification;
 use App\Project;
 use App\Services\Interfaces\SendMailInterface;
 use App\Ticket;
@@ -563,7 +564,7 @@ class ApiController extends Controller
                 ]);
             }
 
-            // $this->dispatch(new TicketCreatedNotification($ticket));
+            $this->dispatch(new TicketCreatedNotification($ticket));
 
             DB::commit();
         } catch (\PDOException $e) {
