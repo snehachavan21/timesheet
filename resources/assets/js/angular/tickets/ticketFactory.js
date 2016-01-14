@@ -51,5 +51,9 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-tickets-time-entries/' + id);
     }
 
+    ticketFactory.getEstimatesByProject = function(id) {
+        return $http.get(baseUrl + 'api/get-project-estimate-list/' + id);
+    }
+
     return ticketFactory;
 }])

@@ -588,6 +588,7 @@ class ApiController extends Controller
             $ticket->project_id = $request->input('project_id');
             $ticket->assigned_to = $request->input('assigned_to');
             $ticket->type = $request->input('type');
+            $ticket->estimate_id = $request->input('estimate_id');
             $ticket->created_by = Auth::user()->id;
             $ticket->status = 'Assigned';
             $ticket->save();
@@ -633,6 +634,7 @@ class ApiController extends Controller
         $ticket->complete_date = $request->input('complete_date');
         $ticket->project_id = $request->input('project_id');
         $ticket->assigned_to = $request->input('assigned_to');
+        $ticket->estimate_id = $request->input('estimate_id');
         $ticket->type = $request->input('type');
         $ticket->status = $request->input('status');
         $ticket->save();
@@ -709,5 +711,11 @@ class ApiController extends Controller
     {
         $ticket = new Ticket;
         return $ticket->getTicketTimeEntries($id);
+    }
+
+    public function getEstimateByProject($id)
+    {
+        $result = DB::table('estimates')->where('project_id', $id)->get();
+        return response(['data' => $result], 200);
     }
 }

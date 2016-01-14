@@ -13,6 +13,15 @@
         class="form-control"/>
     </div>
 
+    <div class="form-group">
+        <!-- Estimates -->
+        <label>Select the estimate</label>
+        <select id="sel" class="form-control disabled" ng-model="newTicket.estimate"
+                ng-options="estimate.id as estimate.desc for estimate in estimates"
+                ng-disabled="estimates==''">
+            <option value="">-- select estimate --</option>
+        </select>
+    </div>
     <!-- description -->
     <div class="form-group">
         <label>Description</label>

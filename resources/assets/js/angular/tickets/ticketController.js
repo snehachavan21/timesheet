@@ -13,6 +13,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             }
         });
 
+        $scope.$watch('newTicket.project', function(newVal, oldVal){
+            if(newVal && newVal[0]) {
+                ticketFactory.getEstimatesByProject(newVal[0].id).success(function(response){
+                    $scope.newTicket.estimate = '';
+                    $scope.estimates = '';
+                    if(!angular.equals([],response.data)) {
+                        $scope.estimates = response.data;
+                        $scope.newTicket.estimate = $scope.estimates[0].id;
+                    }
+                });
+            }
+        }, true);
+
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
             action.projects.success(function(response) {
@@ -132,7 +145,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             showComments: false,
             viewTickets: true,
             viewTicketsFollowing: false,
-            newConversation: ""
+            newConversation: "",
+            estimates: ''
         });
 
         /*methods*/
@@ -148,7 +162,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
                         type: $scope.newTicket.type,
-                        status: $scope.newTicket.status
+                        status: $scope.newTicket.status,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/
@@ -174,7 +189,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         followers: [],
                         type: $scope.newTicket.type,
                         status: $scope.newTicket.status,
-                        id: $routeParams.ticketId
+                        id: $routeParams.ticketId,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/

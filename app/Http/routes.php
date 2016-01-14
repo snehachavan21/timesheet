@@ -88,6 +88,7 @@ Route::group(['middleware' => 'csrf'], function () {
             get('get-tickets-time-entries/{id}', 'ApiController@getTicketTimeEntries');
             post('save-ticket-conversation', 'ApiController@saveTicketConversation');
             get('get-ticket-comments/{id}', 'ApiController@getTicketComments');
+            get('get-project-estimate-list/{id}', 'ApiController@getEstimateByProject');
         });
 
         Route::group(['prefix' => 'spa'], function () {
