@@ -199,9 +199,12 @@ class ManagerController extends Controller
         $user = Auth::user();
         $now = Carbon::now();
         //echo 'aa'.Carbon::parse('this monday')->toDateString();
-        echo "ss".$startOfWeek = $now->startOfWeek();
-        echo "ff".$friday = $startOfWeek->addDay(4);
-        echo "ee".$endOfWeek = $now->endOfWeek();
+        $startOfWeek = $now->startOfWeek();
+        $fridayOfWeek = $startOfWeek->addDay(4);
+        $endOfWeek = $now->endOfWeek();
+        $timeEntryObj = new TimeEntry;
+        $timeEntries = $timeEntryObj->getDaysUserFilledTimesheetInWeek($startOfWeek, $fridayOfWeek);
+
         $data['user_id'] = $user->id;
         $data['user_name'] = $user->name;
         $data['week'] = $now->weekOfMonth;

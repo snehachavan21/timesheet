@@ -174,11 +174,10 @@ class TimeEntry extends Model
      * Function to get the days of the week users have filled there timesheet
      * @return query
      */
-    public function getUserTimesheet()
+    public function getDaysUserFilledTimesheetInWeek($startOfWeek, $fridayOfWeek)
     {
-        $select = [];
         $query = DB::table('time_entries as te')
-            ->select($select)
+            ->whereRaw('DATE(te.updated_at) BETWEEN "' . $startOfWeek . '" AND "' . $fridayOfWeek . '" ')
             ->get();
 
         return $query;
