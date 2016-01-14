@@ -32,6 +32,7 @@
             <li><a href="{{ url('spa/time-tracker-report#/ticket/list') }}"><i class="fa fa-bug"></i> Tickets</a></li>
             <li><a href="{{ url('spa/time-tracker-report#/projects') }}"><i class="fa fa-briefcase"></i> Projects</a></li>
             <li><a href="{{ url('spa/time-tracker-report') }}"><i class="fa fa-table"></i> Reports</a></li>
+            <li><a href="{{ url('manager/weekly-report') }}"><i class="fa fa-table"></i> Weekly Reports</a></li>
             <li><a href="{{ url('spa/time-tracker-download') }}"><i class="fa fa-file-excel-o"></i> Download Report</a></li>
             @endif
           </ul>

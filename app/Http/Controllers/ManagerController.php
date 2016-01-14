@@ -3,11 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Response;
 use App\Services\PieGraph;
 use App\TimeEntry;
 use App\User;
+use App\WeeklyReportEntry;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
+use Input;
+use Session;
+use Validator;
+use View;
 
 class ManagerController extends Controller
 {
@@ -183,4 +193,53 @@ class ManagerController extends Controller
         // Display the graph
         $pie->display();
     }
+
+    public function getWeeklyReport()
+    {
+        $user = Auth::user();
+        $now = Carbon::now();
+        //echo 'aa'.Carbon::parse('this monday')->toDateString();
+        echo "ss".$startOfWeek = $now->startOfWeek();
+        echo "ff".$friday = $startOfWeek->addDay(4);
+        echo "ee".$endOfWeek = $now->endOfWeek();
+        $data['user_id'] = $user->id;
+        $data['user_name'] = $user->name;
+        $data['week'] = $now->weekOfMonth;
+
+        return view('manager.create-weekly-report',compact('data'));
+    }
+
+    public function saveWeeklyReport(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'developer' => 'required',
+            'week' => 'required',
+            'working_days' => 'required',
+            'days_worked' => 'required',
+            'client_project_time' => 'required',
+            'internal_project_time' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return Redirect::to('manager/weekly-report')->withErrors($validator)->withInput();
+        }
+
+        // store
+        $weekly_report = new WeeklyReportEntry;
+        $weekly_report->user_id = $request->input('user_id');
+        $weekly_report->week = $request->input('week');
+        $weekly_report->total_days = $request->input('working_days');
+        $weekly_report->days_worked = $request->input('days_worked');
+        $weekly_report->client_time = $request->input('client_project_time');
+        $weekly_report->internal_time = $request->input('internal_project_time');
+        $weekly_report->rnd_time = $request->input('rnd_time');
+        $weekly_report->comments= $request->input('comment');
+
+        $weekly_report->save();
+
+        Session::flash('message', 'Weekly Report saved successfully!');
+        return redirect('manager/weekly-report');
+
+    }
+
 }

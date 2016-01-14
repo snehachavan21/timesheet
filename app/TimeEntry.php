@@ -170,6 +170,19 @@ class TimeEntry extends Model
 
         return $query;
     }
+    /**
+     * Function to get the days of the week users have filled there timesheet
+     * @return query
+     */
+    public function getUserTimesheet()
+    {
+        $select = [];
+        $query = DB::table('time_entries as te')
+            ->select($select)
+            ->get();
+
+        return $query;
+    }
 
     public function timeEntryForTicket($string)
     {
