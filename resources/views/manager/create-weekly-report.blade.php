@@ -28,14 +28,14 @@
         <label>Developer</label>
         <input type="text" name="developer"
                id="developer" placeholder="Enter the developer name"
-               class="form-control" value="{{ $data['user_name'] }}" />
+               class="form-control" value="{{ $data['user_name'] }}" readonly/>
       </div>
 
       <div class="form-group">
         <label>Week</label>
         <input type="text" name="week"
                id="week" placeholder="Enter the week"
-               class="form-control" value="{{ $data['week'] }}"/>
+               class="form-control" value="{{ $data['week']   }} -- {{ $data['start'] }} - {{ $data['end'] }}" readonly/>
       </div>
 
       <div class="form-group">
@@ -49,7 +49,7 @@
         <label>Days Worked</label>
         <input type="text" name="days_worked"
                id="days_worked" placeholder="Enter the days worked"
-               class="form-control" value=""/>
+               class="form-control" value="{{ $data['days_worked'] }}" readonly/>
       </div>
 
       <div class="form-group">
@@ -76,9 +76,8 @@
 
       <div class="form-group">
         <label>Comment</label>
-        <input type="text" name="comment"
-               id="comment" placeholder="Enter the comments"
-               class="form-control"/>
+        <textarea rows="4" cols="50" name="comment" id="comment" placeholder="Enter the comments" class="form-control"/>
+        </textarea>
       </div>
 
       <button class="btn btn-primary">Save</button>

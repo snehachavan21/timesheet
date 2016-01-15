@@ -7,11 +7,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use App\Services\PieGraph;
 use App\TimeEntry;
 use App\User;
 use App\WeeklyReportEntry;
+use App\Comment;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use Input;
@@ -198,16 +200,21 @@ class ManagerController extends Controller
     {
         $user = Auth::user();
         $now = Carbon::now();
-        //echo 'aa'.Carbon::parse('this monday')->toDateString();
-        $startOfWeek = $now->startOfWeek();
-        $fridayOfWeek = $startOfWeek->addDay(4);
-        $endOfWeek = $now->endOfWeek();
+        $now1 = clone $now;
+        $now2 = clone $now;
+
+        $monday = $now->startOfWeek();
+        $friday =  $now1->startOfWeek()->addDay(4);
+        //$endOfWeek = $now->endOfWeek();
         $timeEntryObj = new TimeEntry;
-        $timeEntries = $timeEntryObj->getDaysUserFilledTimesheetInWeek($startOfWeek, $fridayOfWeek);
+        $timeEntries = $timeEntryObj->getDaysUserFilledTimesheetInWeek($monday,$friday,$user->id);
 
         $data['user_id'] = $user->id;
         $data['user_name'] = $user->name;
-        $data['week'] = $now->weekOfMonth;
+        $data['week'] = ($now2->weekOfMonth < 10) ? '0'.$now2->weekOfMonth : $now2->weekOfMonth;
+        $data['start'] = $monday->format('M d');
+        $data['end']   = $friday->format('M d');
+        $data['days_worked'] = $timeEntries[0]->cnt;
 
         return view('manager.create-weekly-report',compact('data'));
     }
@@ -220,25 +227,43 @@ class ManagerController extends Controller
             'working_days' => 'required',
             'days_worked' => 'required',
             'client_project_time' => 'required',
-            'internal_project_time' => 'required'
+            'internal_project_time' => 'required',
+            'rnd_time' => 'required'
         ]);
 
         if ($validator->fails()) {
             return Redirect::to('manager/weekly-report')->withErrors($validator)->withInput();
         }
-
+        $week_no = explode("--", $request->input('week'));
         // store
         $weekly_report = new WeeklyReportEntry;
         $weekly_report->user_id = $request->input('user_id');
-        $weekly_report->week = $request->input('week');
+        $weekly_report->week = $week_no[0];
         $weekly_report->total_days = $request->input('working_days');
         $weekly_report->days_worked = $request->input('days_worked');
         $weekly_report->client_time = $request->input('client_project_time');
         $weekly_report->internal_time = $request->input('internal_project_time');
         $weekly_report->rnd_time = $request->input('rnd_time');
-        $weekly_report->comments= $request->input('comment');
 
         $weekly_report->save();
+
+        $weekly_report_id = $weekly_report->id;
+        // make an entry if the comment is added
+        if ($request->input('comment')) {
+            $comment = Comment::create([
+                'user_id' => Auth::user()->id,
+                'comment' => $request->input('comment'),
+                'parent_id' => 0,
+                'thread' => '',
+                'status' => 1,
+            ]);
+
+            DB::table('commentables')->insert([
+                'comment_id' => $comment->id,
+                'commentable_id' => $weekly_report_id,
+                'commentable_type' => 'weekly_report',
+            ]);
+        }
 
         Session::flash('message', 'Weekly Report saved successfully!');
         return redirect('manager/weekly-report');

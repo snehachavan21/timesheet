@@ -21,7 +21,6 @@ class WeeklyReportEntry extends Migration
             $table->float('client_time');
             $table->float('internal_time');
             $table->float('rnd_time');
-            $table->string('comments');
             $table->timestamps();
         });
     }
