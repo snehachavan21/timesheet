@@ -42,9 +42,6 @@
             <div ng-repeat="(key, value) in ticketComments" class="panel panel-default">
                 <div class="panel-body comment">
                     <div ng-bind-html="value.comment | unsafe"></div>
-                    <div class="comment-meta-data">
-                        By <strong>{{value.name}}</strong> {{ timeAgo(value.created_at) }}
-                    </div>
 
                     <div class="attachments" ng-show="value.file_name != null">
                         <ul class="fa-ul attachments-ul">
@@ -56,6 +53,12 @@
                             </li>
                         </ul>
                     </div>
+                    <hr>
+                    <div class="comment-meta-data">
+                        By <strong>{{value.name}}</strong> {{ timeAgo(value.created_at) }}
+                    </div>
+
+
                 </div>
             </div>
         </div>
