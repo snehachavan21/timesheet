@@ -8,7 +8,8 @@ var myApp = angular.module('myApp', [
     'angular-loading-bar',
     'textAngular',
     'bgf.paginateAnything',
-    'cfp.hotkeys'
+    'cfp.hotkeys',
+    'ngFileUpload'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',

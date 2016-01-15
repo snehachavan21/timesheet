@@ -65,6 +65,8 @@
   <script type="text/javascript" src="{{ url('vendor/textAngular.min.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/paginate-anything.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/hotkeys.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url('vendor/ng-file-upload-shim.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url('vendor/ng-file-upload.min.js') }}"></script>
 
   <script type="text/javascript" src="{{ url(elixir('js/app.js')) }}"></script>
   @yield('scripts')

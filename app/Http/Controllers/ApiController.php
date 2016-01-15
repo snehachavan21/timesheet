@@ -7,6 +7,7 @@ use App\Comment;
 use App\Estimate;
 use App\Jobs\TicketCreatedNotification;
 use App\Project;
+use App\Services\FileUpload;
 use App\Services\Interfaces\SendMailInterface;
 use App\Ticket;
 use App\TimeEntry;
@@ -672,6 +673,7 @@ class ApiController extends Controller
             $comment->user_id = Auth::user()->id;
             $comment->parent_id = 0;
             $comment->status = 1;
+            $comment->file_id = $request->input('file_id');
             $comment->save();
 
             DB::table('commentables')->insert([

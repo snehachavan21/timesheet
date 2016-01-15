@@ -89,6 +89,7 @@ Route::group(['middleware' => 'csrf'], function () {
             post('save-ticket-conversation', 'ApiController@saveTicketConversation');
             get('get-ticket-comments/{id}', 'ApiController@getTicketComments');
             get('get-project-estimate-list/{id}', 'ApiController@getEstimateByProject');
+
         });
 
         Route::group(['prefix' => 'spa'], function () {
@@ -97,6 +98,9 @@ Route::group(['middleware' => 'csrf'], function () {
             get('time-tracker-download', 'ManagerController@downloadReport');
         });
     });
+
+    post('upload/file', 'FileController@uploadFile');
+    get('download/{id}', 'FileController@getDownload');
 
     Route::resource('project', 'ProjectController');
 

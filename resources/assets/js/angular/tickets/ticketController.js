@@ -1,8 +1,8 @@
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys', 'Upload',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys, Upload) {
 
         /*Adding hotkeys*/
         hotkeys.add({
@@ -10,6 +10,12 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             description: 'This one goes to 11',
             callback: function() {
                 $scope.saveNewConversation();
+            }
+        });
+
+        $scope.$watch('conversation.file', function(file) {
+            if(file!=undefined){
+                $scope.upload_file_name = file.name;
             }
         });
 
@@ -118,7 +124,7 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
         }
 
         /**
-         * This check is required to get the active link on the tab 
+         * This check is required to get the active link on the tab
          * because ticket id is coming after the $http request
          * and so the route function does not get ticket id
          */
@@ -145,8 +151,9 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             showComments: false,
             viewTickets: true,
             viewTicketsFollowing: false,
-            newConversation: "",
-            estimates: ''
+            conversation: {},
+            estimates: '',
+            attachment:{}
         });
 
         /*methods*/
@@ -205,22 +212,39 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
                 }
             },
-            saveNewConversation: function() {
-                if ($scope.newConversation != "") {
-                    var data = {
-                        comment: $scope.newConversation,
-                        ticketId: $routeParams.ticketId
-                    };
-
-                    commentFactory.saveTicketConversation(data).success(function(response) {
-                        console.log('Conversation saved');
-                        console.log(response);
-                        $scope.newConversation = "";
-                        $scope.ticketComments = response.data;
+            submitConversation: function(file) {
+                if ($scope.conversation.conversationDesc != undefined && $scope.conversation.conversationDesc != "") {
+                    if(file == undefined) {
+                        $scope.saveNewConversation();
+                        return;
+                    }
+                    Upload.upload({
+                        url: baseUrl+'upload/file',
+                        data: {file: file}
+                    }).then(function (resp) {
+                        $scope.attachment.id = resp.data.id;
+                        $scope.saveNewConversation();
+                    }, function (resp) {
+                        snackbar.create(resp.data, 1000);
                     });
                 } else {
                     snackbar.create("Add some text before saving the discussion.", 1000);
                 }
+            },
+
+            saveNewConversation: function() {
+                var data = {
+                    comment: $scope.conversation.conversationDesc,
+                    ticketId: $routeParams.ticketId,
+                    file_id: $scope.attachment.id
+                };
+
+                commentFactory.saveTicketConversation(data).success(function(response) {
+                    $scope.conversation.conversationDesc = "";
+                    $scope.upload_file_name = "";
+                    $scope.conversation.file = "";
+                    $scope.ticketComments = response.data;
+                });
             }
         });
 

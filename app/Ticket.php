@@ -108,13 +108,14 @@ class Ticket extends Model
 
     public function getTicketComments($id)
     {
-        $select = ['c.comment', 'c.id', 'u.name', 'c.created_at'];
+        $select = ['c.comment', 'c.id', 'u.name', 'c.created_at','f.file_path', 'f.file_name', 'f.client_file_name', 'c.file_id'];
 
         $query = DB::table('commentables as cb')
             ->select($select)
             ->where('cb.commentable_id', $id)
             ->where('cb.commentable_type', 'App\Ticket')
             ->join('comments as c', 'c.id', '=', 'cb.comment_id', 'left')
+            ->join('files as f', 'f.id', '=', 'c.file_id', 'left')
             ->join('users as u', 'u.id', '=', 'c.user_id', 'left')
             ->orderBy('c.id', 'desc')
             ->get();
