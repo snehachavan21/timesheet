@@ -7,6 +7,7 @@ use App\Comment;
 use App\Estimate;
 use App\Jobs\TicketCreatedNotification;
 use App\Project;
+use App\Services\FileUpload;
 use App\Services\Interfaces\SendMailInterface;
 use App\Ticket;
 use App\TimeEntry;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ApiController extends Controller
 {
@@ -27,10 +29,10 @@ class ApiController extends Controller
         $select = ['ru.role_id as roleId', 'r.name as roleName'];
 
         $user->roles = DB::table('roles_users as ru')
-             ->select($select)
-             ->where('ru.user_id', Auth::user()->id)
-             ->join('roles as r', 'r.id', '=', 'ru.role_id')
-             ->get();
+            ->select($select)
+            ->where('ru.user_id', Auth::user()->id)
+            ->join('roles as r', 'r.id', '=', 'ru.role_id')
+            ->get();
 
         return $user;
     }
@@ -43,46 +45,9 @@ class ApiController extends Controller
     public function getFilterReport(Request $request)
     {
         $timeEntryObj = new TimeEntry;
-        $timeEntryQuery = $timeEntryObj->getManagerTrackerReport();
+        $timeEntryQuery = $timeEntryObj->getTimerTrackerReport();
         $totalTime = 0;
         $totalCount = 0;
-
-        //set filters on query
-        $filters = $request->input('filters');
-
-        if (isset($filters['desc']) && "" != $filters['desc']) {
-            $timeEntryQuery->where('te.desc', $filters['desc']);
-        }
-
-        if (isset($filters['users']) && !empty($filters['users'])) {
-            $timeEntryQuery->whereIn('u.id', $filters['users']);
-        }
-
-        if (isset($filters['clients']) && !empty($filters['clients'])) {
-            $timeEntryQuery->whereIn('c.id', $filters['clients']);
-        }
-
-        if (isset($filters['projects']) && !empty($filters['projects'])) {
-            $timeEntryQuery->whereIn('p.id', $filters['projects']);
-        }
-
-        if (isset($filters['startDate']) && "" != $filters['startDate']) {
-            $timeEntryQuery->whereDate('te.created_at', '>=', date('Y-m-d', strtotime($filters['startDate'])));
-        }
-
-        if (isset($filters['endDate']) && "" != $filters['endDate']) {
-            $timeEntryQuery->whereDate('te.created_at', '<=', date('Y-m-d', strtotime($filters['endDate'])));
-        }
-
-        //get total count and time sum
-        $aggregateResult = \DB::table(\DB::raw(' ( ' . $timeEntryQuery->select('time')->toSql() . ' ) AS counted '))
-            ->selectRaw('count(*) AS totalCount, sum(time) as totalTime')
-            ->mergeBindings($timeEntryQuery)->first();
-
-        if ($aggregateResult) {
-            $totalCount = $aggregateResult->totalCount;
-            $totalTime = $aggregateResult->totalTime;
-        }
 
         //used select field here as we are using same query to get count and time sum
         //set select fields for listing
@@ -97,6 +62,53 @@ class ApiController extends Controller
             DB::raw("DATE(te.created_at) as createdDate"),
         ];
 
+        //set filters on query
+        $filters = $request->input('filters');
+
+        if($request->has('xls')) {
+            $filters = (array) json_decode($filters);
+        }
+
+        if(isset($filters['desc']) && $filters['desc']!="") {
+            $timeEntryQuery->where('te.desc', $filters['desc']);
+        }
+
+        if(isset($filters['users']) && !empty($filters['users'])) {
+            $timeEntryQuery->whereIn('u.id', $filters['users']);
+        }
+
+        if(isset($filters['clients']) && !empty($filters['clients'])) {
+            $timeEntryQuery->whereIn('c.id', $filters['clients']);
+        }
+
+        if(isset($filters['projects']) && !empty($filters['projects'])) {
+            $timeEntryQuery->whereIn('p.id', $filters['projects']);
+        }
+
+        if(isset($filters['startDate']) && $filters['startDate']!="") {
+            $timeEntryQuery->whereDate('te.created_at','>=', date('Y-m-d', strtotime($filters['startDate'])));
+        }
+
+        if(isset($filters['endDate']) && $filters['endDate']!="") {
+            $timeEntryQuery->whereDate('te.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
+        }
+
+        if($request->input('xls')) {
+            $timeEntryQuery->select($select);
+            $this->getFilteredReport($timeEntryQuery->get());
+        }
+
+        //get total count and time sum
+        $aggregateResult = \DB::table(\DB::raw(' ( ' . $timeEntryQuery->select('time')->toSql() . ' ) AS counted '))
+            ->selectRaw('count(*) AS totalCount, sum(time) as totalTime')
+            ->mergeBindings($timeEntryQuery)->first();
+
+        if($aggregateResult) {
+            $totalCount = $aggregateResult->totalCount;
+            $totalTime = $aggregateResult->totalTime;
+        }
+
+
         $timeEntryQuery->select($select);
 
         //pagination limit
@@ -110,6 +122,31 @@ class ApiController extends Controller
 
         return response(['data' => $timeEntryQuery->get(), 'totalTime' => $totalTime])
             ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
+    }
+
+    private function getFilteredReport($timeEntries)
+    {
+        $filename = 'Timesheet_Report_' . time();
+
+        Excel::create($filename, function ($excel) use ($timeEntries) {
+
+            foreach ($timeEntries as $entry) {
+                $data[] = [
+                    'date' => Carbon::parse($entry->created_at)->toDateString(),
+                    'description' => $entry->description,
+                    'time' => $entry->time,
+                    'username' => $entry->username,
+                    'projectName' => $entry->projectName,
+                    'clientName' => $entry->clientName,
+                    'tags' => $entry->tags,
+                ];
+            }
+
+            $excel->sheet('Sheet 1', function ($sheet) use ($data) {
+                $sheet->fromArray($data);
+            });
+        })->export('xls');
+        exit;
     }
 
     /**
@@ -552,6 +589,7 @@ class ApiController extends Controller
             $ticket->project_id = $request->input('project_id');
             $ticket->assigned_to = $request->input('assigned_to');
             $ticket->type = $request->input('type');
+            $ticket->estimate_id = $request->input('estimate_id');
             $ticket->created_by = Auth::user()->id;
             $ticket->status = 'Assigned';
             $ticket->save();
@@ -597,6 +635,7 @@ class ApiController extends Controller
         $ticket->complete_date = $request->input('complete_date');
         $ticket->project_id = $request->input('project_id');
         $ticket->assigned_to = $request->input('assigned_to');
+        $ticket->estimate_id = $request->input('estimate_id');
         $ticket->type = $request->input('type');
         $ticket->status = $request->input('status');
         $ticket->save();
@@ -642,23 +681,48 @@ class ApiController extends Controller
                 'commentable_type' => 'App\Ticket',
             ]);
 
+            $attachments = $request->input('attachments');
+            if($attachments) {
+                foreach($attachments as $key=>$attachment) {
+                    $attachmentInsert[] = [
+                        'file_id' => $attachment['id'],
+                        'fileable_id' => $comment->id,
+                        'fileable_type' => 'App\Comment'
+                    ];
+                }
+                DB::table('fileables')->insert($attachmentInsert);
+            }
             DB::commit();
 
-            $ticket = new Ticket;
-            $response = $ticket->getTicketComments($ticketId);
-
-            return response(['data' => $response], 200);
+            return response(['data' => $this->getCommentsData($ticketId)], 200);
         } catch (\PDOException $e) {
             DB::rollBack();
         }
     }
 
-    public function getTicketComments($id)
+    private function getCommentsData($id)
     {
         $ticket = new Ticket;
-        $result = $ticket->getTicketComments($id);
+        $attachmentsArr = [];
 
-        return response(['data' => $result], 200);
+        $attachments = $ticket->getCommentsAttachment($id);
+        foreach($attachments as $attachment) {
+            $attachmentsArr[$attachment->comment_id][] = $attachment;
+        }
+
+        return ['comments' => $ticket->getTicketComments($id), 'attachments' => $attachmentsArr];
+    }
+
+    public function getTicketAllAttachments($id)
+    {
+        $ticket = new Ticket;
+        $attachments = $ticket->getCommentsAttachment($id);
+        return response(['data' => $attachments], 200);
+    }
+
+    public function getTicketComments($id)
+    {
+        return response(['data' => $this->getCommentsData($id)], 200);
     }
 
     public function getTicketsFollowing()
@@ -673,5 +737,11 @@ class ApiController extends Controller
     {
         $ticket = new Ticket;
         return $ticket->getTicketTimeEntries($id);
+    }
+
+    public function getEstimateByProject($id)
+    {
+        $result = DB::table('estimates')->where('project_id', $id)->get();
+        return response(['data' => $result], 200);
     }
 }

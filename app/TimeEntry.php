@@ -36,15 +36,6 @@ class TimeEntry extends Model
         return $this->morphToMany('App\Tag', 'taggable');
     }
 
-    public function getTotalForReport($subQuery)
-    {
-        $subQuery->select(['time']);
-        // \Log::info(print_r($subQuery->toSql(), 1));
-        $query = Model::selectRaw('count(*) AS totalCount, sum(time) as totalTime')
-            ->from(\DB::raw(' ( ' . $subQuery->toSql() . ' ) AS counted '));
-        return $query;
-    }
-
     public function getManagerTrackerReport()
     {
         $query = DB::table('time_entries as te')
@@ -52,7 +43,6 @@ class TimeEntry extends Model
                 'p.name as projectName', 'c.name as clientName',
                 DB::raw("GROUP_CONCAT(t.name) as tags"), 'te.desc as desc',
                 'te.time as time', 'te.created_at as createdDate'])
-
             ->join('users as u', 'u.id', '=', 'te.user_id', 'left')
             ->join('projects as p', 'p.id', '=', 'te.project_id', 'left')
             ->join('clients as c', 'c.id', '=', 'p.client_id', 'left')
@@ -61,7 +51,20 @@ class TimeEntry extends Model
             ->groupBy('te.id')
             ->orderBy('createdDate', 'desc');
 
-        // \Log::info(print_r($query->toSql(), 1));
+        return $query;
+    }
+
+    public function getTimerTrackerReport()
+    {
+        $query = DB::table('time_entries as te')
+            ->join('users as u', 'u.id', '=', 'te.user_id', 'left')
+            ->join('projects as p', 'p.id', '=', 'te.project_id', 'left')
+            ->join('clients as c', 'c.id', '=', 'p.client_id', 'left')
+            ->join('taggables as tg', 'tg.taggable_id', '=', 'te.id', 'left')
+            ->join('tags as t', 't.id', '=', 'tg.tag_id', 'left')
+            ->groupBy('te.id')
+            ->orderBy('te.created_at', 'desc');
+
         return $query;
     }
 
@@ -166,6 +169,12 @@ class TimeEntry extends Model
         $query = DB::table('users')
             ->whereRaw(' id not in(select user_id from time_entries
             where DATE(created_at) = DATE( DATE_SUB( NOW() , INTERVAL 1 DAY )) order by `created_at` desc)')
+            ->whereNotIn('email',[
+                'philips.mathew@focalworks.in',
+                'samir.balaganur@focalworks.in',
+                'amitav.roy@focalworks.in',
+                'ronnie@focalworks.in'
+            ])
             ->get();
 
         return $query;

@@ -21,7 +21,10 @@
       font-family: 'Source Sans Pro', sans-serif;
     }
   </style>
-  <script> var baseUrl = "{{url('/')}}/";</script>
+  <script>
+    var baseUrl = "{{url('/')}}/";
+    var csrf = "{{ csrf_token() }}";
+  </script>
 
   @yield('meta_tags')
 </head>
@@ -62,6 +65,8 @@
   <script type="text/javascript" src="{{ url('vendor/textAngular.min.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/paginate-anything.js') }}"></script>
   <script type="text/javascript" src="{{ url('vendor/hotkeys.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url('vendor/ng-file-upload-shim.min.js') }}"></script>
+  <script type="text/javascript" src="{{ url('vendor/ng-file-upload.min.js') }}"></script>
 
   <script type="text/javascript" src="{{ url(elixir('js/app.js')) }}"></script>
   @yield('scripts')

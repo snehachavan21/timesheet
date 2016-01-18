@@ -8,7 +8,8 @@ var myApp = angular.module('myApp', [
     'angular-loading-bar',
     'textAngular',
     'bgf.paginateAnything',
-    'cfp.hotkeys'
+    'cfp.hotkeys',
+    'ngFileUpload'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
@@ -320,6 +321,18 @@ myApp.config(['$routeProvider', '$locationProvider',
                     return {
                         ticket: ticketFactory.getTicketById($route.current.params.ticketId),
                         comments: commentFactory.getTicketComments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/ticket/view/:ticketId/attachments', {
+            templateUrl: '/templates/tickets/view-ticket-attachments.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route) {
+                    return {
+                        attachments: ticketFactory.getTicketAttachments($route.current.params.ticketId)
                     }
                 }
             }

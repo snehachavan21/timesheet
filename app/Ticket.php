@@ -122,6 +122,23 @@ class Ticket extends Model
         return $query;
     }
 
+    public function getCommentsAttachment($ticketId)
+    {
+        $select = ['fb.file_id', 'f.file_name', 'f.client_file_name', 'f.file_path', 'cb.comment_id'];
+
+        $query = DB::table('fileables as fb')
+            ->select($select)
+            ->where('cb.commentable_id', $ticketId)
+            ->where('cb.commentable_type', 'App\Ticket')
+            ->where('fb.fileable_type', 'App\Comment')
+            ->join('commentables as cb', 'cb.comment_id', '=', 'fb.fileable_id')
+            ->join('files as f', 'f.id', '=', 'fb.file_id')
+            ->orderBy('cb.commentable_id', 'desc')
+            ->get();
+
+        return $query;
+    }
+
     public function getTicketTimeEntries($id)
     {
         $query = DB::table('tickets as t')

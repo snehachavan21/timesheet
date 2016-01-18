@@ -1,8 +1,8 @@
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys', 'Upload',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys, Upload) {
 
         /*Adding hotkeys*/
         hotkeys.add({
@@ -12,6 +12,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                 $scope.saveNewConversation();
             }
         });
+
+        $scope.$watch('newTicket.project', function(newVal, oldVal){
+            if(newVal && newVal[0]) {
+                ticketFactory.getEstimatesByProject(newVal[0].id).success(function(response){
+                    $scope.newTicket.estimate = '';
+                    $scope.estimates = '';
+                    if(!angular.equals([],response.data)) {
+                        $scope.estimates = response.data;
+                        $scope.newTicket.estimate = $scope.estimates[0].id;
+                    }
+                });
+            }
+        }, true);
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -99,13 +112,23 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
                 console.log('ticket comments', response);
-                $scope.ticketComments = response.data;
+                $scope.ticketComments = response.data.comments;
+                $scope.ticketAttachments = response.data.attachments;
                 $scope.showComments = true;
             });
         }
 
+        /*loading ticket comments*/
+        if (action && action.attachments != undefined) {
+            action.attachments.success(function(response) {
+                $scope.attachmentList = response.data;
+                $scope.showAttachments = true;
+                console.log('attachment list', response.data);
+            });
+        }
+
         /**
-         * This check is required to get the active link on the tab 
+         * This check is required to get the active link on the tab
          * because ticket id is coming after the $http request
          * and so the route function does not get ticket id
          */
@@ -132,7 +155,11 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             showComments: false,
             viewTickets: true,
             viewTicketsFollowing: false,
-            newConversation: ""
+            conversation: {
+                file:[]
+            },
+            estimates: '',
+            attachment:{}
         });
 
         /*methods*/
@@ -148,7 +175,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
                         type: $scope.newTicket.type,
-                        status: $scope.newTicket.status
+                        status: $scope.newTicket.status,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/
@@ -157,7 +185,6 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.saveTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("New ticket added.", 1000);
                     });
@@ -174,7 +201,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         followers: [],
                         type: $scope.newTicket.type,
                         status: $scope.newTicket.status,
-                        id: $routeParams.ticketId
+                        id: $routeParams.ticketId,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/
@@ -183,28 +211,50 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.updateTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("Ticket updated.", 1000);
                     });
                 }
             },
-            saveNewConversation: function() {
-                if ($scope.newConversation != "") {
-                    var data = {
-                        comment: $scope.newConversation,
-                        ticketId: $routeParams.ticketId
-                    };
+            submitConversation: function() {
+                if ($scope.conversation.conversationDesc != undefined && $scope.conversation.conversationDesc != "") {
+                    if($scope.conversation.file == undefined || $scope.conversation.file.length == 0 || $scope.conversation.file == []) {
+                        $scope.saveNewConversation();
+                        return;
+                    } else {
 
-                    commentFactory.saveTicketConversation(data).success(function(response) {
-                        console.log('Conversation saved');
-                        console.log(response);
-                        $scope.newConversation = "";
-                        $scope.ticketComments = response.data;
-                    });
+                        Upload.upload({
+                            url: baseUrl+'upload/file',
+                            data: {file: $scope.conversation.file}
+                        }).then(function (resp) {
+                            $scope.attachments = resp.data;
+                            $scope.saveNewConversation();
+                        }, function (resp) {
+                            snackbar.create(resp.data, 1000);
+                        });
+                    }
                 } else {
                     snackbar.create("Add some text before saving the discussion.", 1000);
                 }
+            },
+
+            saveNewConversation: function() {
+                var data = {
+                    comment: $scope.conversation.conversationDesc,
+                    ticketId: $routeParams.ticketId,
+                    attachments: $scope.attachments
+                };
+
+                commentFactory.saveTicketConversation(data).success(function(response) {
+                    $scope.conversation.conversationDesc = "";
+                    $scope.conversation.file = [];
+                    $scope.ticketAttachments = response.data.attachments;
+                    $scope.ticketComments = response.data.comments;
+                });
+            },
+            removeFile : function(item) {
+                var index = $scope.conversation.file.indexOf(item);
+                $scope.conversation.file.splice(index, 1);
             }
         });
 

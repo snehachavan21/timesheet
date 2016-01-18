@@ -1,7 +1,7 @@
 myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
     function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
 
-        $scope.perPage = 5;
+        $scope.perPage = 100;
         $scope.page = 0;
 
         $scope.clientLimit = 250;
@@ -47,7 +47,8 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
             users: [],
             projects: [],
             clients: {},
-            dt: new Date()
+            dt: new Date(),
+            csrf: csrf
         });
 
         angular.extend($scope, {
@@ -96,6 +97,12 @@ myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projec
                 }
 
                 $scope.postData.filters = angular.copy(queryParams);
+                $scope.postFormFilters = angular.toJson($scope.postData.filters); // as download does not require "xls" param
+            },
+            downloadReport:function(){
+                console.log('report');
+                $scope.postFormFilters = angular.toJson($scope.postData.filters);
+                $('#downloadRptForm').submit();
             },
             clearFilters: function() {
                 $scope.filters = {};
