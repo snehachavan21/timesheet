@@ -26,46 +26,55 @@ class FileController extends Controller
                 if($request->has('filename'))
                     $file = $request->input('filename');
 
-                $extArr = explode("/", $request->file($file)->getClientMimeType());
-                $mimeType = $request->file($file)->getClientMimeType();
-                $fileSize = $request->file($file)->getClientSize();
-                $originalFilename = $request->file($file)->getClientOriginalName();
-                $type = 'local';
+                $files = $request->file($file);
 
-                // check with the file extention
-
-                if ($extArr) {
-                    $ext = $extArr[1];
-                }
-                if(!$ext) {
-                    return false;
+                if(!is_array($files)) {
+                    $files[] = $request->file($file);
                 }
 
-                $fileName = uniqid() . "." . $ext;
+                foreach($files as $f) {
+                    $extArr = explode("/", $f->getClientMimeType());
+                    $mimeType = $f->getClientMimeType();
+                    $fileSize = $f->getClientSize();
+                    $originalFilename = $f->getClientOriginalName();
+                    $type = 'local';
 
-                if (!file_exists($this->filePath)) {
-                    mkdir($this->filePath, 0777, true);
+                    // check with the file extention
+
+                    if ($extArr) {
+                        $ext = $extArr[1];
+                    }
+                    if(!$ext) {
+                        return false;
+                    }
+
+                    $fileName = uniqid() . "." . $ext;
+
+                    if (!file_exists($this->filePath)) {
+                        mkdir($this->filePath, 0777, true);
+                    }
+
+                    $f->move(
+                        $this->filePath, $fileName
+                    );
+
+                    $filePath = $this->filePath . $fileName;
+
+
+                    $file = File::create([
+                        'file_name' => $fileName,
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                        'file_path' =>  $filePath,
+                        'client_file_name' => $originalFilename,
+                        'type' => $type,
+                    ]);
+
+                    $responseArr[] = $file;
+
                 }
-
-                $request->file($file)->move(
-                    $this->filePath, $fileName
-                );
-
-                $filePath = $this->filePath . $fileName;
-
-
-                $file = File::create([
-                    'file_name' => $fileName,
-                    'mime_type' => $mimeType,
-                    'file_size' => $fileSize,
-                    'file_path' =>  $filePath,
-                    'client_file_name' => $originalFilename,
-                    'type' => $type,
-                ]);
-
                 DB::commit();
-
-                return $file;
+                return $responseArr;
 
             } catch (FileException $e){
 //                echo $e->getMessage();

@@ -13,12 +13,6 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             }
         });
 
-        $scope.$watch('conversation.file', function(file) {
-            if(file!=undefined){
-                $scope.upload_file_name = file.name;
-            }
-        });
-
         $scope.$watch('newTicket.project', function(newVal, oldVal){
             if(newVal && newVal[0]) {
                 ticketFactory.getEstimatesByProject(newVal[0].id).success(function(response){
@@ -118,8 +112,18 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
                 console.log('ticket comments', response);
-                $scope.ticketComments = response.data;
+                $scope.ticketComments = response.data.comments;
+                $scope.ticketAttachments = response.data.attachments;
                 $scope.showComments = true;
+            });
+        }
+
+        /*loading ticket comments*/
+        if (action && action.attachments != undefined) {
+            action.attachments.success(function(response) {
+                $scope.attachmentList = response.data;
+                $scope.showAttachments = true;
+                console.log('attachment list', response.data);
             });
         }
 
@@ -151,7 +155,9 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             showComments: false,
             viewTickets: true,
             viewTicketsFollowing: false,
-            conversation: {},
+            conversation: {
+                file:[]
+            },
             estimates: '',
             attachment:{}
         });
@@ -179,7 +185,6 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.saveTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("New ticket added.", 1000);
                     });
@@ -206,27 +211,28 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.updateTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("Ticket updated.", 1000);
                     });
                 }
             },
-            submitConversation: function(file) {
+            submitConversation: function() {
                 if ($scope.conversation.conversationDesc != undefined && $scope.conversation.conversationDesc != "") {
-                    if(file == undefined) {
+                    if($scope.conversation.file == undefined || $scope.conversation.file.length == 0 || $scope.conversation.file == []) {
                         $scope.saveNewConversation();
                         return;
+                    } else {
+
+                        Upload.upload({
+                            url: baseUrl+'upload/file',
+                            data: {file: $scope.conversation.file}
+                        }).then(function (resp) {
+                            $scope.attachments = resp.data;
+                            $scope.saveNewConversation();
+                        }, function (resp) {
+                            snackbar.create(resp.data, 1000);
+                        });
                     }
-                    Upload.upload({
-                        url: baseUrl+'upload/file',
-                        data: {file: file}
-                    }).then(function (resp) {
-                        $scope.attachment.id = resp.data.id;
-                        $scope.saveNewConversation();
-                    }, function (resp) {
-                        snackbar.create(resp.data, 1000);
-                    });
                 } else {
                     snackbar.create("Add some text before saving the discussion.", 1000);
                 }
@@ -236,15 +242,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                 var data = {
                     comment: $scope.conversation.conversationDesc,
                     ticketId: $routeParams.ticketId,
-                    file_id: $scope.attachment.id
+                    attachments: $scope.attachments
                 };
 
                 commentFactory.saveTicketConversation(data).success(function(response) {
                     $scope.conversation.conversationDesc = "";
-                    $scope.upload_file_name = "";
-                    $scope.conversation.file = "";
-                    $scope.ticketComments = response.data;
+                    $scope.conversation.file = [];
+                    $scope.ticketAttachments = response.data.attachments;
+                    $scope.ticketComments = response.data.comments;
                 });
+            },
+            removeFile : function(item) {
+                var index = $scope.conversation.file.indexOf(item);
+                $scope.conversation.file.splice(index, 1);
             }
         });
 

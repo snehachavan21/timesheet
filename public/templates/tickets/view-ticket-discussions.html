@@ -23,19 +23,24 @@
 
                 <div>
                     <label class="btn btn-primary" for="my-file-selector">
-                        <input id="my-file-selector" name="file" ng-file-model="conversation.file"
-                               ng-model="conversation.file" ngf-select  style="display:none;"
-                                >
+                        <input id="my-file-selector"
+                               ng-model="conversation.file" ngf-select ngf-multiple="true" style="display:none;" ngf-keep="true">
                         <span class="fa fa-paperclip fa-lg"></span>
                         Attachment
                     </label>
-                    <span class='label label-info'>{{upload_file_name}}</span>
+
+                    <span ng-repeat="f in conversation.file">
+                        <div class='label label-info' >{{f.name}}
+                            <span ng-click="removeFile(f)"><i class="fa fa-times"></i></span>
+                        </div>
+                    </span>
+
+
                 </div>
                 <br>
-                <button class="btn btn-success" ng-click="submitConversation(conversation.file)">Add</button>
+                <button class="btn btn-success" ng-click="submitConversation()">Add</button>
 
             </form>
-
 
             <hr>
             <h5>Previous comments</h5>
@@ -43,16 +48,13 @@
                 <div class="panel-body comment">
                     <div ng-bind-html="value.comment | unsafe"></div>
 
-                    <div class="attachments" ng-show="value.file_name != null">
-                        <ul class="fa-ul attachments-ul">
-                            <li>
-                                <a href="/download/{{value.file_id}}">
-                                    <i class="fa fa-li fa-file"></i>
-                                    {{(value.client_file_name!='') ? value.client_file_name : value.file_name}}
-                                </a>
-                            </li>
-                        </ul>
+                    <div ng-repeat="attach in ticketAttachments[value.id]">
+                        <a href="/download/{{attach.file_id}}">
+                            <span class="fa fa-file"></span>
+                            {{(attach.client_file_name!='') ? attach.client_file_name : attach.file_name}}
+                        </a>
                     </div>
+
                     <hr>
                     <div class="comment-meta-data">
                         By <strong>{{value.name}}</strong> {{ timeAgo(value.created_at) }}

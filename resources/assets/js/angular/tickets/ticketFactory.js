@@ -55,5 +55,9 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-project-estimate-list/' + id);
     }
 
+    ticketFactory.getTicketAttachments = function(id) {
+        return $http.get(baseUrl + 'api/get-ticket-attachments/' + id);
+    }
+
     return ticketFactory;
 }])

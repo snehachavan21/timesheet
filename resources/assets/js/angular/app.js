@@ -326,6 +326,18 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/view/:ticketId/attachments', {
+            templateUrl: '/templates/tickets/view-ticket-attachments.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route) {
+                    return {
+                        attachments: ticketFactory.getTicketAttachments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/view/:ticketId/time-entries', {
             templateUrl: '/templates/tickets/view-ticket-time-entries.html',
             controller: 'ticketController',

@@ -29,10 +29,10 @@ class ApiController extends Controller
         $select = ['ru.role_id as roleId', 'r.name as roleName'];
 
         $user->roles = DB::table('roles_users as ru')
-             ->select($select)
-             ->where('ru.user_id', Auth::user()->id)
-             ->join('roles as r', 'r.id', '=', 'ru.role_id')
-             ->get();
+            ->select($select)
+            ->where('ru.user_id', Auth::user()->id)
+            ->join('roles as r', 'r.id', '=', 'ru.role_id')
+            ->get();
 
         return $user;
     }
@@ -107,7 +107,7 @@ class ApiController extends Controller
             $totalCount = $aggregateResult->totalCount;
             $totalTime = $aggregateResult->totalTime;
         }
-        
+
 
         $timeEntryQuery->select($select);
 
@@ -673,7 +673,6 @@ class ApiController extends Controller
             $comment->user_id = Auth::user()->id;
             $comment->parent_id = 0;
             $comment->status = 1;
-            $comment->file_id = $request->input('file_id');
             $comment->save();
 
             DB::table('commentables')->insert([
@@ -682,23 +681,48 @@ class ApiController extends Controller
                 'commentable_type' => 'App\Ticket',
             ]);
 
+            $attachments = $request->input('attachments');
+            if($attachments) {
+                foreach($attachments as $key=>$attachment) {
+                    $attachmentInsert[] = [
+                        'file_id' => $attachment['id'],
+                        'fileable_id' => $comment->id,
+                        'fileable_type' => 'App\Comment'
+                    ];
+                }
+                DB::table('fileables')->insert($attachmentInsert);
+            }
             DB::commit();
 
-            $ticket = new Ticket;
-            $response = $ticket->getTicketComments($ticketId);
-
-            return response(['data' => $response], 200);
+            return response(['data' => $this->getCommentsData($ticketId)], 200);
         } catch (\PDOException $e) {
             DB::rollBack();
         }
     }
 
-    public function getTicketComments($id)
+    private function getCommentsData($id)
     {
         $ticket = new Ticket;
-        $result = $ticket->getTicketComments($id);
+        $attachmentsArr = [];
 
-        return response(['data' => $result], 200);
+        $attachments = $ticket->getCommentsAttachment($id);
+        foreach($attachments as $attachment) {
+            $attachmentsArr[$attachment->comment_id][] = $attachment;
+        }
+
+        return ['comments' => $ticket->getTicketComments($id), 'attachments' => $attachmentsArr];
+    }
+
+    public function getTicketAllAttachments($id)
+    {
+        $ticket = new Ticket;
+        $attachments = $ticket->getCommentsAttachment($id);
+        return response(['data' => $attachments], 200);
+    }
+
+    public function getTicketComments($id)
+    {
+        return response(['data' => $this->getCommentsData($id)], 200);
     }
 
     public function getTicketsFollowing()

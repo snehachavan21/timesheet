@@ -89,6 +89,7 @@ Route::group(['middleware' => 'csrf'], function () {
             post('save-ticket-conversation', 'ApiController@saveTicketConversation');
             get('get-ticket-comments/{id}', 'ApiController@getTicketComments');
             get('get-project-estimate-list/{id}', 'ApiController@getEstimateByProject');
+            get('get-ticket-attachments/{id}', 'ApiController@getTicketAllAttachments');
 
         });
 
