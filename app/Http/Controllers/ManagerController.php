@@ -199,6 +199,9 @@ class ManagerController extends Controller
     public function getWeeklyReport()
     {
         $user = Auth::user();
+        $role = User::roles();
+        $user_role = $role[0]->role;
+
         $now = Carbon::now();
         $now1 = clone $now;
         $now2 = clone $now;
@@ -209,14 +212,22 @@ class ManagerController extends Controller
         $timeEntryObj = new TimeEntry;
         $timeEntries = $timeEntryObj->getDaysUserFilledTimesheetInWeek($monday,$friday,$user->id);
 
+        $weekly_report = WeeklyReportEntry::where('user_id', $user->id)->paginate(20);
+
         $data['user_id'] = $user->id;
         $data['user_name'] = $user->name;
         $data['week'] = ($now2->weekOfMonth < 10) ? '0'.$now2->weekOfMonth : $now2->weekOfMonth;
         $data['start'] = $monday->format('M d');
+        $data['start_of_week'] = $monday->format('Y-m-d');
         $data['end']   = $friday->format('M d');
+        $data['end_of_week']   = $friday->format('Y-m-d');
         $data['days_worked'] = $timeEntries[0]->cnt;
+        $data['weekly_report'] = $weekly_report;
 
-        return view('manager.create-weekly-report',compact('data'));
+        if($user_role == 'Developer')
+            return view('manager.create-weekly-report',compact('data'));
+        else
+            return view('manager.create-weekly-report-top-level',compact('data'));
     }
 
     public function saveWeeklyReport(Request $request){
@@ -239,6 +250,8 @@ class ManagerController extends Controller
         $weekly_report = new WeeklyReportEntry;
         $weekly_report->user_id = $request->input('user_id');
         $weekly_report->week = $week_no[0];
+        $weekly_report->start_of_week = $request->input('start_of_week');
+        $weekly_report->end_of_week = $request->input('end_of_week');
         $weekly_report->total_days = $request->input('working_days');
         $weekly_report->days_worked = $request->input('days_worked');
         $weekly_report->client_time = $request->input('client_project_time');

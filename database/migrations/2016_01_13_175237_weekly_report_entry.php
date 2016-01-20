@@ -16,6 +16,8 @@ class WeeklyReportEntry extends Migration
             $table->increments('id');
             $table->integer('user_id');
             $table->integer('week');
+            $table->date('start_of_week');
+            $table->date('end_of_week');
             $table->integer('total_days');
             $table->integer('days_worked');
             $table->float('client_time');

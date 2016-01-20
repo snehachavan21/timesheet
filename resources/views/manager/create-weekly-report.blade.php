@@ -23,6 +23,8 @@
     <form action="{{ url('manager/save-weekly-report') }}" method="POST" name="weeklyReportForm">
       <input type="hidden" name="_token" value="{{ csrf_token() }}">
       <input type="hidden" name="user_id" id="user_id" value="{{ $data['user_id'] }}">
+      <input type="hidden" name="start_of_week" id="start_of_week" value="{{ $data['start_of_week'] }}">
+      <input type="hidden" name="end_of_week" id="end_of_week" value="{{ $data['end_of_week'] }}">
 
       <div class="form-group">
         <label>Developer</label>
@@ -89,6 +91,7 @@
       <thead>
       <tr>
         <th>Name</th>
+        <th>Week</th>
         <th>Work Days</th>
         <th>Days Worked</th>
         <th>Client Project</th>
@@ -97,22 +100,28 @@
         <th>Week Total</th>
       </tr>
       </thead>
-
+      <?php ?>
       <tbody>
+      @foreach ($data['weekly_report'] as $key => $value)
+      <?php $total_time = $value['client_time'] + $value['internal_time']+ $value['rnd_time'];
 
+            $start_of_week = date("M d", strtotime($value['start_of_week']));
+            $end_of_week = date("M d", strtotime($value['end_of_week']));
+      ?>
       <tr>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
-        <td class="col-sm-1"></td>
+        <td class="col-sm-1">{!! $data['user_name'] !!}</td>
+        <td class="col-sm-1">{!! $data['week'] !!} -- {!! $start_of_week !!} - {!! $end_of_week !!}</td>
+        <td class="col-sm-1">{!! $value['total_days'] !!}</td>
+        <td class="col-sm-1">{!! $value['days_worked'] !!}</td>
+        <td class="col-sm-1">{!! $value['client_time'] !!}</td>
+        <td class="col-sm-1">{!! $value['internal_time'] !!}</td>
+        <td class="col-sm-1">{!! $value['rnd_time'] !!}</td>
+        <td class="col-sm-1">{!! $total_time !!}</td>
       </tr>
-
+      @endforeach
       </tbody>
     </table>
-
+    {!! $data['weekly_report']->render() !!}
   </div>
 </div>
 
