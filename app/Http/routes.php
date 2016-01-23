@@ -52,7 +52,9 @@ Route::group(['middleware' => 'csrf'], function () {
             get('date-wise-download/{sdate}/{edate}', 'ManagerController@downloadDateWiseReport');
             get('create-pie-chart/{sdate}/{edate}', 'ManagerController@createPieChart');
             get('weekly-report', 'ManagerController@getWeeklyReport');
+            get('add-weekly-report', 'ManagerController@addWeeklyReport');
             post('save-weekly-report', 'ManagerController@saveWeeklyReport');
+            post('weekly-report-search', 'ManagerController@getWeeklyReportSearch');
         });
 
         Route::group(['prefix' => 'api'], function () {

@@ -25,7 +25,7 @@ class ManagerController extends Controller
 {
     public function __construct()
     {
-        $allowed = ['Admin', 'Project Manager'];
+        $allowed = ['Developer','Admin', 'Project Manager'];
         $userRoles = User::roles();
         $flag = false;
 
@@ -195,8 +195,78 @@ class ManagerController extends Controller
         // Display the graph
         $pie->display();
     }
-
     public function getWeeklyReport()
+    {
+        return view('manager.weekly-report-main');
+    }
+
+    /**
+     *
+     * @param Request $request
+     * @return mixed
+     */
+    public function getWeeklyReportSearch(Request $request)
+    {
+        $weeklyReportObj = new WeeklyReportEntry;
+        $weeklyReportQuery = $weeklyReportObj->getAllWeeklyReports();
+        $totalCount = 0;
+
+        //used select field here as we are using same query to get count
+        //set select fields for listing
+        $select = [
+            'wre.created_at as created_at',
+            'wre.week as week',
+            'wre.start_of_week as start',
+            'wre.end_of_week as end',
+            'wre.total_days as total_days',
+            'wre.days_worked as days_worked',
+            'wre.client_time as client_time',
+            'wre.internal_time as internal_time',
+            'wre.rnd_time as rnd_time',
+            'u.name as username',
+            DB::raw("DATE(wre.created_at) as createdDate"),
+        ];
+
+        //set filters on query
+        $filters = $request->input('filters');
+
+
+        if(isset($filters['users']) && !empty($filters['users'])) {
+            $weeklyReportQuery->whereIn('u.id', $filters['users']);
+        }
+
+        if(isset($filters['startDate']) && $filters['startDate']!="") {
+            $weeklyReportQuery->whereDate('wre.created_at','>=', date('Y-m-d', strtotime($filters['startDate'])));
+        }
+
+        if(isset($filters['endDate']) && $filters['endDate']!="") {
+            $weeklyReportQuery->whereDate('wre.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
+        }
+        //get total count
+        $aggregateResult = \DB::table(\DB::raw(' ( ' . $weeklyReportQuery->select('week')->toSql() . ' ) AS week '))
+            ->selectRaw('count(*) AS totalCount')
+            ->mergeBindings($weeklyReportQuery)->first();
+
+        if($aggregateResult) {
+            $totalCount = $aggregateResult->totalCount;
+        }
+
+        $weeklyReportQuery->select($select);
+
+        //pagination limit
+        $range = explode('-', $request->header('range'));
+
+        $weeklyReportQuery->skip($range[0]);
+
+        $limit = (0 == $range[0]) ? $range[1] : ($range[1] - $range[0]);
+
+        $weeklyReportQuery->limit($limit);
+
+        return response(['data' => $weeklyReportQuery->get()])
+            ->header('Content-Range', "{$request->header('range')}/{$totalCount}");
+    }
+
+    public function addWeeklyReport()
     {
         $user = Auth::user();
         $role = User::roles();
@@ -224,10 +294,8 @@ class ManagerController extends Controller
         $data['days_worked'] = $timeEntries[0]->cnt;
         $data['weekly_report'] = $weekly_report;
 
-        if($user_role == 'Developer')
-            return view('manager.create-weekly-report',compact('data'));
-        else
-            return view('manager.create-weekly-report-top-level',compact('data'));
+        return view('manager.create-weekly-report',compact('data'));
+
     }
 
     public function saveWeeklyReport(Request $request){
@@ -279,7 +347,7 @@ class ManagerController extends Controller
         }
 
         Session::flash('message', 'Weekly Report saved successfully!');
-        return redirect('manager/weekly-report');
+        return redirect('manager/add-weekly-report');
 
     }
 

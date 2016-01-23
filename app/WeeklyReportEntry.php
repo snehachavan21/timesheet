@@ -14,4 +14,13 @@ class WeeklyReportEntry extends Model
     {
         return $this->belongsTo('App\User');
     }
+
+    public function getAllWeeklyReports()
+    {
+        $query = DB::table('weekly_report_entries as wre')
+            ->join('users as u', 'u.id', '=', 'wre.user_id', 'left')
+            ->orderBy('wre.week', 'desc')
+            ->orderBy('wre.user_id', 'desc');
+        return $query;
+    }
 }
