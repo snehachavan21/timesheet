@@ -169,11 +169,11 @@ class TimeEntry extends Model
         $query = DB::table('users')
             ->whereRaw(' id not in(select user_id from time_entries
             where DATE(created_at) = DATE( DATE_SUB( NOW() , INTERVAL 1 DAY )) order by `created_at` desc)')
-            ->whereNotIn('email',[
+            ->whereNotIn('email', [
                 'philips.mathew@focalworks.in',
                 'samir.balaganur@focalworks.in',
                 'amitav.roy@focalworks.in',
-                'ronnie@focalworks.in'
+                'ronnie@focalworks.in',
             ])
             ->get();
 
@@ -183,16 +183,16 @@ class TimeEntry extends Model
      * Function to get the days of the week users have filled there timesheet
      * @return query
      */
-    public function getDaysUserFilledTimesheetInWeek($startOfWeek, $fridayOfWeek,$user_id)
+    public function getDaysUserFilledTimesheetInWeek($startOfWeek, $fridayOfWeek, $user_id)
     {
         $select = [
-            DB::raw("count(*) as cnt")
+            DB::raw("count(*) as cnt"),
         ];
         $query = DB::table('time_entries as te')
-                ->select($select)
-                ->whereRaw('DATE(te.created_at) BETWEEN "' . $startOfWeek . '" AND "' . $fridayOfWeek . '" ')
-                ->whereRaw('te.user_id='. $user_id)
-                ->get(); 
+            ->select($select)
+            ->whereRaw('DATE(te.created_at) BETWEEN "' . $startOfWeek . '" AND "' . $fridayOfWeek . '" ')
+            ->whereRaw('te.user_id=' . $user_id)
+            ->get();
         return $query;
     }
 

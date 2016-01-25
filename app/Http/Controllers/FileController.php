@@ -5,34 +5,32 @@ namespace App\Http\Controllers;
 use App\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class FileController extends Controller
 {
     public function __construct()
     {
-        $this->filePath = base_path()  . env('FILE_UPLOAD_PATH', '/storage/files/');
+        $this->filePath = base_path() . env('FILE_UPLOAD_PATH', '/storage/files/');
     }
 
     public function uploadFile(Request $request)
     {
         try {
-            try{
+            try {
                 DB::beginTransaction();
                 $file = 'file';
-                if($request->has('filename'))
+                if ($request->has('filename')) {
                     $file = $request->input('filename');
+                }
 
                 $files = $request->file($file);
 
-                if(!is_array($files)) {
+                if (!is_array($files)) {
                     $files[] = $request->file($file);
                 }
 
-                foreach($files as $f) {
+                foreach ($files as $f) {
                     $extArr = explode("/", $f->getClientMimeType());
                     $mimeType = $f->getClientMimeType();
                     $fileSize = $f->getClientSize();
@@ -44,7 +42,7 @@ class FileController extends Controller
                     if ($extArr) {
                         $ext = $extArr[1];
                     }
-                    if(!$ext) {
+                    if (!$ext) {
                         return false;
                     }
 
@@ -60,24 +58,21 @@ class FileController extends Controller
 
                     $filePath = $this->filePath . $fileName;
 
-
                     $file = File::create([
                         'file_name' => $fileName,
                         'mime_type' => $mimeType,
                         'file_size' => $fileSize,
-                        'file_path' =>  $filePath,
+                        'file_path' => $filePath,
                         'client_file_name' => $originalFilename,
                         'type' => $type,
                     ]);
 
                     $responseArr[] = $file;
-
                 }
                 DB::commit();
                 return $responseArr;
-
-            } catch (FileException $e){
-//                echo $e->getMessage();
+            } catch (FileException $e) {
+                // echo $e->getMessage();
                 return response($e->getMessage(), 500);
             }
         } catch (Exception $e) {
@@ -86,9 +81,10 @@ class FileController extends Controller
         }
     }
 
-    public function getDownload($id){
+    public function getDownload($id)
+    {
         $file = File::find($id);
-        $filePath = $this->filePath. $file->file_name;
+        $filePath = $this->filePath . $file->file_name;
         return response()->download($filePath);
     }
 }
