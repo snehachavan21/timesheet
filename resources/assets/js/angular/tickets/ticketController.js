@@ -225,7 +225,11 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
 
                         Upload.upload({
                             url: baseUrl+'upload/file',
-                            data: {file: $scope.conversation.file}
+                            data: {
+                                file: $scope.conversation.file,
+                                destination: 's3',
+                                path: 'attachments'
+                            }
                         }).then(function (resp) {
                             $scope.attachments = resp.data;
                             $scope.saveNewConversation();
