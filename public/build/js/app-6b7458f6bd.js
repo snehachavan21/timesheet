@@ -8,7 +8,8 @@ var myApp = angular.module('myApp', [
     'angular-loading-bar',
     'textAngular',
     'bgf.paginateAnything',
-    'cfp.hotkeys'
+    'cfp.hotkeys',
+    'ngFileUpload'
 ]);
 
 myApp.run(['userFactory', '$cookies', '$rootScope', '$location',
@@ -115,6 +116,19 @@ myApp.config(['$routeProvider', '$locationProvider',
                 action: function(clientFactory) {
                     return {
                         clients: clientFactory.getClientList()
+                    }
+                }
+            }
+        });
+
+        $routeProvider.when('/weekly-report-list', {
+            templateUrl: '/templates/manager/weeklyReport.html',
+            controller: 'weeklyReportController',
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(clientFactory) {
+                    return {
+                        //clients: clientFactory.getClientList()
                     }
                 }
             }
@@ -325,6 +339,18 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/ticket/view/:ticketId/attachments', {
+            templateUrl: '/templates/tickets/view-ticket-attachments.html',
+            controller: 'ticketController',
+            resolve: {
+                action: function(ticketFactory, $route) {
+                    return {
+                        attachments: ticketFactory.getTicketAttachments($route.current.params.ticketId)
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/ticket/view/:ticketId/time-entries', {
             templateUrl: '/templates/tickets/view-ticket-time-entries.html',
             controller: 'ticketController',
@@ -437,172 +463,6 @@ myApp.factory('clientFactory', ['$http', function($http) {
 
     return clientFactory;
 }]);
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function(commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    commentFactory.getTicketComments = function(ticketId) {
-        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
-    }
-
-    commentFactory.saveTicketConversation = function(conversationData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-ticket-conversation',
-            method: 'POST',
-            data: conversationData
-        });
-    }
-
-    return commentFactory;
-}]);
-
-myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
-    function($scope, timeEntry, $parse) {
-        timeEntry.getTimeSheetEntryByDate().success(function(response) {
-            $scope.timeEntryOverview = response;
-        });
-
-        angular.extend($scope, {
-            graphLabels: {}
-        });
-
-        angular.extend($scope, {
-            changeTag: function(url) {
-                $scope.tabUrl = url;
-            }
-        });
-
-        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
-        $scope.data = [300, 500, 100];
-    }
-]);
-
-myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
-    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
-
-        $scope.perPage = 5;
-        $scope.page = 0;
-
-        $scope.clientLimit = 250;
-        $scope.postUrl = baseUrl+'api/time-report';
-        $scope.postData = {};
-
-        $scope.$on('pagination:loadStart', function (event, status, config) {
-            $scope.page = event.currentScope.page;
-            $scope.perPage = event.currentScope.perPage;
-        });
-
-        /*check if clients are loaded*/
-        if (action && action.clients != undefined) {
-            action.clients.success(function(response) {
-                console.log('all clients', response);
-                $scope.clients = response;
-            });
-        }
-
-        userFactory.getUserList().then(function(response) {
-            console.log('user list', response.data);
-            angular.forEach(response.data, function(value, key) {
-                $scope.users.push(value);
-            });
-            //});
-        }).then(function() {
-            projectFactory.getProjectList().then(function(response) {
-                console.log('project list', response.data);
-                angular.forEach(response.data, function(value, key) {
-                    $scope.projects.push(value);
-                });
-
-                $timeout(function() {
-                    $scope.showData = true;
-                }, 500);
-            });
-        });
-
-        angular.extend($scope, {
-            totalTime: 0,
-            showData: false,
-            filters: {},
-            users: [],
-            projects: [],
-            clients: {},
-            dt: new Date()
-        });
-
-        angular.extend($scope, {
-            filterTime: function(filterTimeFrm) {
-                console.log($scope.filters);
-                var queryParams = {};
-
-                if ($scope.filters.desc != "") {
-                    queryParams.desc = $scope.filters.desc;
-                }
-
-                if ($scope.filters.users !== undefined && $scope.filters.users.length > 0) {
-                    queryParams.users = [];
-                    angular.forEach($scope.filters.users, function(value, key) {
-                        queryParams.users.push(value.id);
-                    });
-                }
-
-                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
-                    queryParams.clients = [];
-                    angular.forEach($scope.filters.clients, function(value, key) {
-                        queryParams.clients.push(value.id);
-                    });
-                }
-
-                if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
-                    queryParams.projects = [];
-                    angular.forEach($scope.filters.project, function(value, key) {
-                        queryParams.projects.push(value.id);
-                    });
-                }
-
-                if ($scope.filters.startDate !== undefined) {
-                    queryParams.startDate = $scope.filters.startDate;
-                }
-
-                if ($scope.filters.endDate !== undefined) {
-                    queryParams.endDate = $scope.filters.endDate;
-                    var startDateOfYear = moment(queryParams.startDate).dayOfYear();
-                    var endDateOfYear = moment(queryParams.endDate).dayOfYear();
-
-                    if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
-                        alert('End date is before start date.');
-                        return false;
-                    }
-                }
-
-                $scope.postData.filters = angular.copy(queryParams);
-            },
-            clearFilters: function() {
-                $scope.filters = {};
-            }
-        });
-    }
-]);
 
 myApp.factory('estimateFactory', ['$http', function($http) {
     var estimateFactory = {};
@@ -849,11 +709,218 @@ myApp.factory('projectFactory', ['$http', function($http) {
     return projectFactory;
 }]);
 
+myApp.controller('dashboardController', ['$scope', 'timeEntry', '$parse',
+    function($scope, timeEntry, $parse) {
+        timeEntry.getTimeSheetEntryByDate().success(function(response) {
+            $scope.timeEntryOverview = response;
+        });
+
+        angular.extend($scope, {
+            graphLabels: {}
+        });
+
+        angular.extend($scope, {
+            changeTag: function(url) {
+                $scope.tabUrl = url;
+            }
+        });
+
+        $scope.labels = ["Download Sales", "In-Store Sales", "Mail-Order Sales"];
+        $scope.data = [300, 500, 100];
+    }
+]);
+
+myApp.controller('reportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
+
+        $scope.perPage = 100;
+        $scope.page = 0;
+
+        $scope.clientLimit = 250;
+        $scope.postUrl = baseUrl+'api/time-report';
+        $scope.postData = {};
+
+        $scope.$on('pagination:loadStart', function (event, status, config) {
+            $scope.page = event.currentScope.page;
+            $scope.perPage = event.currentScope.perPage;
+        });
+
+        /*check if clients are loaded*/
+        if (action && action.clients != undefined) {
+            action.clients.success(function(response) {
+                console.log('all clients', response);
+                $scope.clients = response;
+            });
+        }
+
+        userFactory.getUserList().then(function(response) {
+            console.log('user list', response.data);
+            angular.forEach(response.data, function(value, key) {
+                $scope.users.push(value);
+            });
+            //});
+        }).then(function() {
+            projectFactory.getProjectList().then(function(response) {
+                console.log('project list', response.data);
+                angular.forEach(response.data, function(value, key) {
+                    $scope.projects.push(value);
+                });
+
+                $timeout(function() {
+                    $scope.showData = true;
+                }, 500);
+            });
+        });
+
+        angular.extend($scope, {
+            totalTime: 0,
+            showData: false,
+            filters: {},
+            users: [],
+            projects: [],
+            clients: {},
+            dt: new Date(),
+            csrf: csrf
+        });
+
+        angular.extend($scope, {
+            filterTime: function(filterTimeFrm) {
+                console.log($scope.filters);
+                var queryParams = {};
+
+                if ($scope.filters.desc != "") {
+                    queryParams.desc = $scope.filters.desc;
+                }
+
+                if ($scope.filters.users !== undefined && $scope.filters.users.length > 0) {
+                    queryParams.users = [];
+                    angular.forEach($scope.filters.users, function(value, key) {
+                        queryParams.users.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.clients !== undefined && $scope.filters.clients.length > 0) {
+                    queryParams.clients = [];
+                    angular.forEach($scope.filters.clients, function(value, key) {
+                        queryParams.clients.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.project !== undefined && $scope.filters.project.length > 0) {
+                    queryParams.projects = [];
+                    angular.forEach($scope.filters.project, function(value, key) {
+                        queryParams.projects.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.startDate !== undefined) {
+                    queryParams.startDate = $scope.filters.startDate;
+                }
+
+                if ($scope.filters.endDate !== undefined) {
+                    queryParams.endDate = $scope.filters.endDate;
+                    var startDateOfYear = moment(queryParams.startDate).dayOfYear();
+                    var endDateOfYear = moment(queryParams.endDate).dayOfYear();
+
+                    if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
+                        alert('End date is before start date.');
+                        return false;
+                    }
+                }
+
+                $scope.postData.filters = angular.copy(queryParams);
+                $scope.postFormFilters = angular.toJson($scope.postData.filters); // as download does not require "xls" param
+            },
+            downloadReport:function(){
+                console.log('report');
+                $scope.postFormFilters = angular.toJson($scope.postData.filters);
+                $('#downloadRptForm').submit();
+            },
+            clearFilters: function() {
+                $scope.filters = {};
+            }
+        });
+    }
+]);
+
+myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', 'projectFactory', 'userFactory', 'action','$location',
+    function($scope, timeEntry, $timeout, projectFactory, userFactory, action,$location) {
+        $scope.perPage = 100;
+        $scope.page = 0;
+
+        $scope.clientLimit = 250;
+        $scope.postUrl = baseUrl+'manager/weekly-report-search';
+        $scope.postData = {};
+
+        $scope.$on('pagination:loadStart', function (event, status, config) {
+            $scope.page = event.currentScope.page;
+            $scope.perPage = event.currentScope.perPage;
+        });
+
+        userFactory.getUserList().then(function(response) {
+            console.log('user list', response.data);
+            angular.forEach(response.data, function(value, key) {
+                $scope.users.push(value);
+            });
+            $timeout(function() {
+                $scope.showData = true;
+            }, 500);
+            });
+     
+
+        angular.extend($scope, {
+            totalTime: 0,
+            showData: false,
+            filters: {},
+            users: [],
+            projects: [],
+            clients: {},
+            dt: new Date(),
+            csrf: csrf
+        });
+
+        angular.extend($scope, {
+            filterWeeklyReport: function(filterWeeklyFrm) {
+                console.log($scope.filters);
+                var queryParams = {};
+
+
+                if ($scope.filters.users !== undefined && $scope.filters.users.length > 0) {
+                    queryParams.users = [];
+                    angular.forEach($scope.filters.users, function(value, key) {
+                        queryParams.users.push(value.id);
+                    });
+                }
+
+                if ($scope.filters.startDate !== undefined) {
+                    queryParams.startDate = $scope.filters.startDate;
+                }
+
+                if ($scope.filters.endDate !== undefined) {
+                    queryParams.endDate = $scope.filters.endDate;
+                    var startDateOfYear = moment(queryParams.startDate).dayOfYear();
+                    var endDateOfYear = moment(queryParams.endDate).dayOfYear();
+
+                    if ($scope.filters.startDate !== undefined && endDateOfYear < startDateOfYear) {
+                        alert('End date is before start date.');
+                        return false;
+                    }
+                }
+
+                $scope.postData.filters = angular.copy(queryParams);
+                $scope.postFormFilters = angular.toJson($scope.postData.filters); // as download does not require "xls" param
+            },
+            clearFilters: function() {
+                $scope.filters = {};
+            }
+        });
+    }
+]);
 /**
  * Created by amitav on 12/29/15.
  */
-myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys',
-    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys) {
+myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$location', 'snackbar', '$routeParams', 'commentFactory', 'hotkeys', 'Upload',
+    function($scope, action, ticketFactory, $location, snackbar, $routeParams, commentFactory, hotkeys, Upload) {
 
         /*Adding hotkeys*/
         hotkeys.add({
@@ -863,6 +930,19 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                 $scope.saveNewConversation();
             }
         });
+
+        $scope.$watch('newTicket.project', function(newVal, oldVal){
+            if(newVal && newVal[0]) {
+                ticketFactory.getEstimatesByProject(newVal[0].id).success(function(response){
+                    $scope.newTicket.estimate = '';
+                    $scope.estimates = '';
+                    if(!angular.equals([],response.data)) {
+                        $scope.estimates = response.data;
+                        $scope.newTicket.estimate = $scope.estimates[0].id;
+                    }
+                });
+            }
+        }, true);
 
         /*check if projects are loaded*/
         if (action && action.projects != undefined) {
@@ -950,13 +1030,23 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
         if (action && action.comments != undefined) {
             action.comments.success(function(response) {
                 console.log('ticket comments', response);
-                $scope.ticketComments = response.data;
+                $scope.ticketComments = response.data.comments;
+                $scope.ticketAttachments = response.data.attachments;
                 $scope.showComments = true;
             });
         }
 
+        /*loading ticket comments*/
+        if (action && action.attachments != undefined) {
+            action.attachments.success(function(response) {
+                $scope.attachmentList = response.data;
+                $scope.showAttachments = true;
+                console.log('attachment list', response.data);
+            });
+        }
+
         /**
-         * This check is required to get the active link on the tab 
+         * This check is required to get the active link on the tab
          * because ticket id is coming after the $http request
          * and so the route function does not get ticket id
          */
@@ -983,7 +1073,11 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
             showComments: false,
             viewTickets: true,
             viewTicketsFollowing: false,
-            newConversation: ""
+            conversation: {
+                file:[]
+            },
+            estimates: '',
+            attachment:{}
         });
 
         /*methods*/
@@ -999,7 +1093,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         assigned_to: $scope.newTicket.users[0].id,
                         followers: [],
                         type: $scope.newTicket.type,
-                        status: $scope.newTicket.status
+                        status: $scope.newTicket.status,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/
@@ -1008,7 +1103,6 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.saveTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("New ticket added.", 1000);
                     });
@@ -1025,7 +1119,8 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                         followers: [],
                         type: $scope.newTicket.type,
                         status: $scope.newTicket.status,
-                        id: $routeParams.ticketId
+                        id: $routeParams.ticketId,
+                        estimate_id: $scope.newTicket.estimate
                     };
 
                     /*Adding follower ids*/
@@ -1034,28 +1129,54 @@ myApp.controller('ticketController', ['$scope', 'action', 'ticketFactory', '$loc
                     });
 
                     ticketFactory.updateTicket(ticketData).success(function(response) {
-                        console.log(response);
                         $location.path('/ticket/list');
                         snackbar.create("Ticket updated.", 1000);
                     });
                 }
             },
-            saveNewConversation: function() {
-                if ($scope.newConversation != "") {
-                    var data = {
-                        comment: $scope.newConversation,
-                        ticketId: $routeParams.ticketId
-                    };
+            submitConversation: function() {
+                if ($scope.conversation.conversationDesc != undefined && $scope.conversation.conversationDesc != "") {
+                    if($scope.conversation.file == undefined || $scope.conversation.file.length == 0 || $scope.conversation.file == []) {
+                        $scope.saveNewConversation();
+                        return;
+                    } else {
 
-                    commentFactory.saveTicketConversation(data).success(function(response) {
-                        console.log('Conversation saved');
-                        console.log(response);
-                        $scope.newConversation = "";
-                        $scope.ticketComments = response.data;
-                    });
+                        Upload.upload({
+                            url: baseUrl+'upload/file',
+                            data: {
+                                file: $scope.conversation.file,
+                                destination: 's3',
+                                path: 'attachments'
+                            }
+                        }).then(function (resp) {
+                            $scope.attachments = resp.data;
+                            $scope.saveNewConversation();
+                        }, function (resp) {
+                            snackbar.create(resp.data, 1000);
+                        });
+                    }
                 } else {
                     snackbar.create("Add some text before saving the discussion.", 1000);
                 }
+            },
+
+            saveNewConversation: function() {
+                var data = {
+                    comment: $scope.conversation.conversationDesc,
+                    ticketId: $routeParams.ticketId,
+                    attachments: $scope.attachments
+                };
+
+                commentFactory.saveTicketConversation(data).success(function(response) {
+                    $scope.conversation.conversationDesc = "";
+                    $scope.conversation.file = [];
+                    $scope.ticketAttachments = response.data.attachments;
+                    $scope.ticketComments = response.data.comments;
+                });
+            },
+            removeFile : function(item) {
+                var index = $scope.conversation.file.indexOf(item);
+                $scope.conversation.file.splice(index, 1);
             }
         });
 
@@ -1115,8 +1236,55 @@ myApp.factory('ticketFactory', ['$http', function($http) {
         return $http.get(baseUrl + 'api/get-tickets-time-entries/' + id);
     }
 
+    ticketFactory.getEstimatesByProject = function(id) {
+        return $http.get(baseUrl + 'api/get-project-estimate-list/' + id);
+    }
+
+    ticketFactory.getTicketAttachments = function(id) {
+        return $http.get(baseUrl + 'api/get-ticket-attachments/' + id);
+    }
+
     return ticketFactory;
 }])
+
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function(commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    commentFactory.getTicketComments = function(ticketId) {
+        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
+    }
+
+    commentFactory.saveTicketConversation = function(conversationData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-ticket-conversation',
+            method: 'POST',
+            data: conversationData
+        });
+    }
+
+    return commentFactory;
+}]);
 
 myApp.factory('timeEntry', ['$http', function($http) {
     var timeEntry = {};

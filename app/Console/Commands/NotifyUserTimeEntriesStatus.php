@@ -41,7 +41,7 @@ class NotifyUserTimeEntriesStatus extends Command
     {
         $timeEntryObj = new TimeEntry();
         $users = $timeEntryObj->getPreviousDayTimeEntry();
-        if(!empty($users)) {
+        if (!empty($users)) {
             $this->sendEmail($mail, $users);
         }
     }
@@ -54,8 +54,8 @@ class NotifyUserTimeEntriesStatus extends Command
             'from' => 'amitav.roy@focalworks.in',
             'fromName' => 'Amitav Roy',
             'to' => 'amitav.roy@focalworks.in',
-            'toName' => '',
-            'subject' => 'List of Employees forgot to fill time sheet for date : '. $date,
+            'toName' => 'Amitav Roy',
+            'subject' => 'List of Employees forgot to fill time sheet for date : ' . $date,
             'mailBody' => view('mails.user-time-entry-status-mail')->with('userData', $userData),
         ]);
     }

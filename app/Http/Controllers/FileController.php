@@ -5,16 +5,14 @@ namespace App\Http\Controllers;
 use App\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class FileController extends Controller
 {
     public function __construct()
     {
-        $this->filePath = base_path()  . env('FILE_UPLOAD_PATH', '/storage/files/');
+        $this->filePath = base_path() . env('FILE_UPLOAD_PATH', '/storage/files/');
         $this->s3Prefix = env('S3_URL');
     }
 
@@ -25,19 +23,20 @@ class FileController extends Controller
     public function uploadFile(Request $request)
     {
         try {
-            try{
+            try {
                 DB::beginTransaction();
                 $file = 'file';
-                if($request->has('filename'))
+                if ($request->has('filename')) {
                     $file = $request->input('filename');
+                }
 
                 $files = $request->file($file);
 
-                if(!is_array($files)) {
+                if (!is_array($files)) {
                     $files[] = $request->file($file);
                 }
 
-                foreach($files as $f) {
+                foreach ($files as $f) {
                     $extArr = explode("/", $f->getClientMimeType());
                     $mimeType = $f->getClientMimeType();
                     $fileSize = $f->getClientSize();
@@ -48,7 +47,7 @@ class FileController extends Controller
                     if ($extArr) {
                         $ext = $extArr[1];
                     }
-                    if(!$ext) {
+                    if (!$ext) {
                         return false;
                     }
 
@@ -77,7 +76,7 @@ class FileController extends Controller
                         'file_name' => $fileName,
                         'mime_type' => $mimeType,
                         'file_size' => $fileSize,
-                        'file_path' =>  $filePath,
+                        'file_path' => $filePath,
                         'client_file_name' => $originalFilename,
                         'type' => $type,
                     ]);
@@ -88,7 +87,7 @@ class FileController extends Controller
                 DB::commit();
                 return $responseArr;
 
-            } catch (FileException $e){
+            } catch (FileException $e) {
                 return response($e->getMessage(), 500);
             }
         } catch (Exception $e) {
@@ -97,14 +96,21 @@ class FileController extends Controller
         }
     }
 
-    public function getDownload($id){
+    public function getDownload($id)
+    {
         $file = File::find($id);
+        $s3 = Storage::disk('s3');
 
-        $downloadUrl = $s3->getObjectUrl(env('S3_BUCKET'), 'data.txt', '+5 minutes', array(
-            'ResponseContentDisposition' => 'attachment; filename="' . $fileName . '"',
-        ));
+        if ('s3' == $file->type) {
+            $fileUrl = env('S3_URL') . $file->file_path;
+            return $fileUrl;
+        }
 
-        $filePath = $this->filePath. $file->file_name;
-        return response()->download($filePath);
+        // $downloadUrl = $s3->getObjectUrl(env('S3_BUCKET'), 'data.txt', '+5 minutes', array(
+        //     'ResponseContentDisposition' => 'attachment; filename="' . $file->fileName . '"',
+        // ));
+
+        // $filePath = $this->filePath . $file->file_name;
+        // return response()->download($filePath);
     }
 }

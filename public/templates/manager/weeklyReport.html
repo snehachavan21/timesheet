@@ -1,0 +1,109 @@
+<div class="row">
+    <div class="col-sm-12">
+        <h1>Weekly Report</h1>
+    </div>
+</div>
+
+<div class="hidden">
+    <form action="{{postUrl}}" method="post" name="downloadRptForm" id="downloadRptForm">
+        <input name="xls" id="xls" value="true" />
+        <input name="filters" id="filters" value="true" ng-model="postFormFilters" />
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+    </form>
+</div>
+
+<form ng-submit="filterWeeklyReport(filterWeeklyFrm)" name="filterWeeklyFrm">
+
+    <div class="row" ng-show="showData">
+        <div class="col-sm-3">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>Start Date</label>
+                <datepicker date-format="yyyy, MMM d">
+                    <input ng-model="filters.startDate" type="text" class="form-control" placeholder="Enter start date" />
+                </datepicker>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label>End Date</label>
+                <datepicker date-format="yyyy, MMM d" date-min-limit="filters.startDate">
+                    <input ng-model="filters.endDate" type="text" class="form-control" placeholder="Enter end date" />
+                </datepicker>
+            </div>
+        </div>
+
+        <div class="col-sm-3">
+            <div class="form-group">
+                <label>User</label>
+                <oi-select
+                        oi-options="user.name for user in users track by user.id"
+                        ng-model="filters.users"
+                        multiple
+                        placeholder="Select User"
+                        ></oi-select>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <br><br>
+            <button class="btn btn-success">Filter</button>
+            <button class="btn btn-warning" ng-click="clearFilters()">Clear</button>
+        </div>
+    </div>
+</form>
+
+<div class="row">
+    <div class="col-sm-12" ng-hide="showData">
+        <i class="fa fa-refresh fa-spin fa-5x"></i>
+    </div>
+</div>
+
+<div class="animated fadeIn" ng-show="showData">
+
+    <div class="row">
+
+        <div class="col-sm-12">
+            <table class="table table-bordered table-striped">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Week</th>
+                    <th>Work Days</th>
+                    <th>Days Worked</th>
+                    <th>Client Project</th>
+                    <th>Internal Project</th>
+                    <th>RND Project</th>
+                    <th>Week Total</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr ng-repeat="(key, entry) in reportEntries.data">
+                    <td>{{entry.username}}</td>
+                    <td>{{entry.week}} - {{entry.start}} - {{entry.end}}</td>
+                    <td>{{entry.total_days}}</td>
+                    <td>{{entry.days_worked}}</td>
+                    <td>{{entry.client_time}}</td>
+                    <td>{{entry.internal_time}}</td>
+                    <td>{{entry.rnd_time}}</td>
+                    <td>{{ (entry.client_time) + (entry.internal_time) + (entry.rnd_time) }}</td>
+                </tr>
+                </tbody>
+            </table>
+            <bgf-pagination
+                    page="page"
+                    per-page="perPage"
+                    client-limit="clientLimit"
+                    collection="reportEntries"
+                    method="POST"
+                    reload-page="false"
+                    post-data="postData"
+                    template-url="../templates/partials/paginate-anything.html"
+                    url="postUrl">
+            </bgf-pagination>
+        </div>
+    </div>
+</div>
+

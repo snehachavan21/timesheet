@@ -121,6 +121,19 @@ myApp.config(['$routeProvider', '$locationProvider',
             }
         });
 
+        $routeProvider.when('/weekly-report-list', {
+            templateUrl: '/templates/manager/weeklyReport.html',
+            controller: 'weeklyReportController',
+            roles: ['Admin', 'Project Manager'],
+            resolve: {
+                action: function(clientFactory) {
+                    return {
+                        //clients: clientFactory.getClientList()
+                    }
+                }
+            }
+        });
+
         $routeProvider.when('/projects', {
             templateUrl: '/templates/projects/projects-listing.html',
             controller: 'projectController',
