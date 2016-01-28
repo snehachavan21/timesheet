@@ -3,7 +3,7 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
         $scope.perPage = 100;
         $scope.page = 0;
 
-        $scope.clientLimit = 250;
+        $scope.clientLimit =250;
         $scope.postUrl = baseUrl+'manager/weekly-report-search';
         $scope.postData = {};
 
@@ -11,6 +11,8 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
             $scope.page = event.currentScope.page;
             $scope.perPage = event.currentScope.perPage;
         });
+
+
 
         userFactory.getUserList().then(function(response) {
             console.log('user list', response.data);
@@ -21,7 +23,7 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
                 $scope.showData = true;
             }, 500);
             });
-     
+
 
         angular.extend($scope, {
             totalTime: 0,

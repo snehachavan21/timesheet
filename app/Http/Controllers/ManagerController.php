@@ -216,8 +216,8 @@ class ManagerController extends Controller
         $select = [
             'wre.created_at as created_at',
             'wre.week as week',
-            'wre.start_of_week as start',
-            'wre.end_of_week as end',
+            DB::raw("DATE_FORMAT(wre.start_of_week,'%b %d' ) as start"),
+            DB::raw("DATE_FORMAT(wre.end_of_week,'%b %d' ) as end"),
             'wre.total_days as total_days',
             'wre.days_worked as days_worked',
             'wre.client_time as client_time',
@@ -236,11 +236,11 @@ class ManagerController extends Controller
         }
 
         if(isset($filters['startDate']) && $filters['startDate']!="") {
-            $weeklyReportQuery->whereDate('wre.created_at','>=', date('Y-m-d', strtotime($filters['startDate'])));
+            $weeklyReportQuery->whereDate('wre.start_of_week','>=', date('Y-m-d', strtotime($filters['startDate'])));
         }
 
         if(isset($filters['endDate']) && $filters['endDate']!="") {
-            $weeklyReportQuery->whereDate('wre.created_at','<=', date('Y-m-d', strtotime($filters['endDate'])));
+            $weeklyReportQuery->whereDate('wre.end_of_week','<=', date('Y-m-d', strtotime($filters['endDate'])));
         }
         //get total count
         $aggregateResult = \DB::table(\DB::raw(' ( ' . $weeklyReportQuery->select('week')->toSql() . ' ) AS week '))
