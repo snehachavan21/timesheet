@@ -16,15 +16,15 @@
 
                 <div class="conversation-add">
                     <div text-angular ng-model="conversation.conversationDesc"
-                         ta-toolbar="[]"
-                         style="font-size: 1em"></div>
+                    ta-toolbar="[]"
+                    style="font-size: 1em"></div>
                 </div>
                 <br>
 
                 <div>
                     <label class="btn btn-primary" for="my-file-selector">
                         <input id="my-file-selector"
-                               ng-model="conversation.file" ngf-select ngf-multiple="true" style="display:none;" ngf-keep="true">
+                        ng-model="conversation.file" ngf-select ngf-multiple="true" style="display:none;" ngf-keep="true">
                         <span class="fa fa-paperclip fa-lg"></span>
                         Attachment
                     </label>
@@ -49,7 +49,7 @@
                     <div ng-bind-html="value.comment | unsafe"></div>
 
                     <div ng-repeat="attach in ticketAttachments[value.id]">
-                        <a href="/download/{{attach.file_id}}">
+                        <a href="{{attach.file_path}}" target="_blank">
                             <span class="fa fa-file"></span>
                             {{(attach.client_file_name!='') ? attach.client_file_name : attach.file_name}}
                         </a>

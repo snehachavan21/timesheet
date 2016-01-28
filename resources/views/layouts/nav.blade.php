@@ -27,8 +27,8 @@
             <li><a href="{{ url('spa/spa-dashboard#/ticket/my-tickets') }}"><i class="fa fa-bug"></i> My tickets</a></li>
             {{-- <li><a href="{{ url('spa/spa-dashboard#/user/request-backdate-entry') }}"><i class="fa fa-backward"></i> Request backdate entry</a></li> --}}
 
-            <li><a href="{{ url('manager/weekly-report#/weekly-report-list') }}"><i class="fa fa-table"></i> Weekly Reports</a></li>
-            <li><a href="{{ url('manager/add-weekly-report') }}"><i class="fa fa-table"></i>Add Weekly Reports</a></li>
+            {{-- <li><a href="{{ url('manager/weekly-report#/weekly-report-list') }}"><i class="fa fa-table"></i> Weekly Reports</a></li>
+            <li><a href="{{ url('manager/add-weekly-report') }}"><i class="fa fa-table"></i> Add Weekly Reports</a></li> --}}
             @if (Gate::allows('viewTrackerReport', new \App\TimeEntry))
             <li role="separator" class="divider"></li>
             <li><a href="{{ url('spa/time-tracker-report#/manage/back-date-entry') }}"><i class="fa fa-backward"></i> Backdate Entry</a></li>
