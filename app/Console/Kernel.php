@@ -30,7 +30,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('inspire')
                  ->hourly();
 
-        $schedule->command('backup:dbdaily')->dailyAt('14:00'); // 2 PM Backup
+        $schedule->command('backup:dbdaily')->dailyAt('16:00'); // 2 PM Backup
         $schedule->command('backup:dbdaily')->dailyAt('9:30'); // 9:30 AM Backup
         //$schedule->command('clear-backdates')->daily(); // this will run @ midnight everyday
     }
