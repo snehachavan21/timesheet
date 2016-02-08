@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\Inspire::class,
         \App\Console\Commands\DailyDbBackup::class,
         \App\Console\Commands\ClearOldBackdateEntries::class,
-        \App\Console\Commands\NotifyUserTimeEntriesStatus::class
+        \App\Console\Commands\NotifyUserTimeEntriesStatus::class,
     ];
 
     /**
@@ -30,8 +30,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('inspire')
                  ->hourly();
 
-        $schedule->command('backup:dbdaily')->dailyAt('16:00'); // IST 9:30 PM
-        $schedule->command('backup:dbdaily')->dailyAt('10:30'); // IST 2:30 PM
+        $schedule->command('backup:dbdaily')->dailyAt('14:00'); // 2 PM Backup
+        $schedule->command('backup:dbdaily')->dailyAt('9:30'); // 9:30 AM Backup
         //$schedule->command('clear-backdates')->daily(); // this will run @ midnight everyday
     }
 }
