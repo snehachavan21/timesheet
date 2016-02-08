@@ -464,6 +464,45 @@ myApp.factory('clientFactory', ['$http', function($http) {
     return clientFactory;
 }]);
 
+/**
+ * Created by amitav on 12/13/15.
+ */
+myApp.factory('commentFactory', ['$http', function($http) {
+    var commentFactory = {};
+
+    commentFactory.getProjectComments = function(projectId) {
+        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
+    }
+
+    commentFactory.saveComment = function(commentData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-project-comment',
+            method: 'POST',
+            data: commentData
+        });
+    }
+
+    commentFactory.getTicketComments = function(ticketId) {
+        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
+    }
+
+    commentFactory.saveTicketConversation = function(conversationData) {
+        return $http({
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            url: baseUrl + 'api/save-ticket-conversation',
+            method: 'POST',
+            data: conversationData
+        });
+    }
+
+    return commentFactory;
+}]);
+
 myApp.factory('estimateFactory', ['$http', function($http) {
     var estimateFactory = {};
 
@@ -848,7 +887,7 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
         $scope.perPage = 100;
         $scope.page = 0;
 
-        $scope.clientLimit = 250;
+        $scope.clientLimit =250;
         $scope.postUrl = baseUrl+'manager/weekly-report-search';
         $scope.postData = {};
 
@@ -856,6 +895,8 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
             $scope.page = event.currentScope.page;
             $scope.perPage = event.currentScope.perPage;
         });
+
+
 
         userFactory.getUserList().then(function(response) {
             console.log('user list', response.data);
@@ -866,7 +907,7 @@ myApp.controller('weeklyReportController', ['$scope', 'timeEntry', '$timeout', '
                 $scope.showData = true;
             }, 500);
             });
-     
+
 
         angular.extend($scope, {
             totalTime: 0,
@@ -1246,45 +1287,6 @@ myApp.factory('ticketFactory', ['$http', function($http) {
 
     return ticketFactory;
 }])
-
-/**
- * Created by amitav on 12/13/15.
- */
-myApp.factory('commentFactory', ['$http', function($http) {
-    var commentFactory = {};
-
-    commentFactory.getProjectComments = function(projectId) {
-        return $http.get(baseUrl + 'api/get-project-comments/' + projectId);
-    }
-
-    commentFactory.saveComment = function(commentData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-project-comment',
-            method: 'POST',
-            data: commentData
-        });
-    }
-
-    commentFactory.getTicketComments = function(ticketId) {
-        return $http.get(baseUrl + 'api/get-ticket-comments/' + ticketId);
-    }
-
-    commentFactory.saveTicketConversation = function(conversationData) {
-        return $http({
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            url: baseUrl + 'api/save-ticket-conversation',
-            method: 'POST',
-            data: conversationData
-        });
-    }
-
-    return commentFactory;
-}]);
 
 myApp.factory('timeEntry', ['$http', function($http) {
     var timeEntry = {};
